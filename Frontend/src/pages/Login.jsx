@@ -52,7 +52,7 @@ const Login = () => {
   return (
     <div className="min-h-screen w-full flex items-center justify-center
                     bg-gradient-to-br from-gray-900 via-indigo-900 to-black
-                    relative overflow-hidden px-4 py-12">
+                    relative overflow-hidden px-4 py-12 justify-content-center">
 
       {/* ── Ambient background blobs ── */}
       <div className="pointer-events-none absolute inset-0">

@@ -62,13 +62,22 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="max-w-md w-full bg-white p-8 rounded shadow">
-        <h2 className="text-2xl font-bold mb-6 text-center">Create an account</h2>
-        {generalError && (
-          <p className="text-red-600 text-center mb-4">{generalError}</p>
-        )}
-        <form onSubmit={handleSubmit} noValidate>
+    <div className="min-h-screen w-full flex items-center justify-center
+                    bg-gradient-to-br from-gray-900 via-indigo-900 to-black
+                    relative overflow-hidden px-4 py-12">
+      {/* ambient blobs & overlay could be copied from Login if desired */}
+      <div className="relative z-10 w-full max-w-md mx-auto">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/40 px-8 py-10">
+          <h2 className="text-white text-2xl font-semibold mb-1 text-center">
+            Create an account
+          </h2>
+          <p className="text-slate-400 text-sm mb-8 text-center">
+            Fill in the form to start your journey
+          </p>
+          {generalError && (
+            <p className="text-red-600 text-center mb-4">{generalError}</p>
+          )}
+          <form onSubmit={handleSubmit} noValidate>
           <div className="mb-4">
             <label htmlFor="fullName" className="block text-sm font-medium mb-1">
               Full Name
@@ -79,7 +88,7 @@ const Register = () => {
               id="fullName"
               value={form.fullName}
               onChange={handleChange}
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
+              className="w-full bg-white/5 border rounded-lg px-4 py-2.5 text-white text-sm placeholder-slate-600 outline-none transition-all duration-150 focus:bg-white/8 focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500/20"
             />
             {errors.fullName && (
               <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
@@ -95,7 +104,7 @@ const Register = () => {
               id="email"
               value={form.email}
               onChange={handleChange}
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
+              className="w-full bg-white/5 border rounded-lg px-4 py-2.5 text-white text-sm placeholder-slate-600 outline-none transition-all duration-150 focus:bg-white/8 focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500/20"
             />
             {errors.email && (
               <p className="text-red-500 text-sm mt-1">{errors.email}</p>
@@ -111,7 +120,7 @@ const Register = () => {
               id="password"
               value={form.password}
               onChange={handleChange}
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
+              className="w-full bg-white/5 border rounded-lg px-4 py-2.5 text-white text-sm placeholder-slate-600 outline-none transition-all duration-150 focus:bg-white/8 focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500/20"
             />
             {errors.password && (
               <p className="text-red-500 text-sm mt-1">{errors.password}</p>
@@ -130,7 +139,7 @@ const Register = () => {
               id="confirmPassword"
               value={form.confirmPassword}
               onChange={handleChange}
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
+              className="w-full bg-white/5 border rounded-lg px-4 py-2.5 text-white text-sm placeholder-slate-600 outline-none transition-all duration-150 focus:bg-white/8 focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500/20"
             />
             {errors.confirmPassword && (
               <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
@@ -145,7 +154,7 @@ const Register = () => {
               id="role"
               value={form.role}
               onChange={handleChange}
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-blue-300"
+              className="w-full bg-white/5 border rounded-lg px-4 py-2.5 text-white text-sm placeholder-slate-600 outline-none transition-all duration-150 focus:bg-white/8 focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500/20"
             >
               <option value="student">Student</option>
               <option value="admin">Admin</option>
@@ -157,17 +166,18 @@ const Register = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+            className="w-full mt-2 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-lg py-3 transition-all duration-200 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-px active:translate-y-0"
           >
             {loading ? 'Registering...' : 'Register'}
           </button>
         </form>
         <p className="mt-4 text-center text-sm">
           Already have an account?{' '}
-          <Link to="/login" className="text-blue-600 hover:underline">
+          <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors duration-150 underline underline-offset-2">
             Login
           </Link>
         </p>
+        </div> {/* end card */}
       </div>
     </div>
   );
