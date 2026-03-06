@@ -1,15 +1,14 @@
-import api from './api';
+// src/services/authService.js
+import axios from 'axios';
 
-export const login = (credentials) => {
-  // credentials: { email, password }
-  return api.post('/auth/login', credentials);
-};
+const baseURL = 'http://localhost:3000/api/auth';
 
-export const register = (userData) => {
-  // userData: { name, email, password, role }
-  return api.post('/auth/register', userData);
-};
-
-export const fetchProfile = () => {
-  return api.get('/auth/profile');
-};
+/**
+ * Send registration data to the backend.
+ * @param {{name:string,email:string,password:string}} data
+ * @returns {Promise<any>} response data
+ */
+export async function registerUser(data) {
+  const response = await axios.post(`${baseURL}/register`, data);
+  return response.data;
+}
