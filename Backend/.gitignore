@@ -1,3 +1,8 @@
+# Mac system files
 .DS_Store
-./node_modules
+
+# Node dependencies
+node_modules/
+
+# Environment variables
 .env
