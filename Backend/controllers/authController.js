@@ -1,17 +1,30 @@
 import User from "../models/user.js";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
+const createToken = (user) => {
+  return jwt.sign(
+    { id: user._id.toString(), role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+};
+
+const sanitizeUser = (user) => {
+  const { password, __v, ...rest } = user.toObject ? user.toObject() : user;
+  return rest;
+};
 
 // REGISTER
 export const registerUser = async (req, res) => {
   try {
-
     const { name, email, password, role } = req.body;
 
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
       return res.status(400).json({
-        message: "User already exists"
+        message: "User already exists",
       });
     }
 
@@ -21,33 +34,34 @@ export const registerUser = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role
+      role: role || "student",
     });
 
     await user.save();
 
+    const token = createToken(user);
+
     res.status(201).json({
       message: "User registered successfully",
-      user
+      token,
+      role: user.role,
+      user: sanitizeUser(user),
     });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-
 // LOGIN
 export const loginUser = async (req, res) => {
   try {
-
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(404).json({
-        message: "User not found"
+        message: "User not found",
       });
     }
 
@@ -55,15 +69,18 @@ export const loginUser = async (req, res) => {
 
     if (!isMatch) {
       return res.status(400).json({
-        message: "Invalid credentials"
+        message: "Invalid credentials",
       });
     }
 
+    const token = createToken(user);
+
     res.status(200).json({
       message: "Login successful",
-      user
+      token,
+      role: user.role,
+      user: sanitizeUser(user),
     });
-
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

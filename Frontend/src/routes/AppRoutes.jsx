@@ -16,6 +16,7 @@ import StudentRoadmap from '../pages/student/Roadmap';
 import AdminDashboard from '../pages/admin/Dashboard';
 import AdminAddCompany from '../pages/admin/AddCompany';
 import AdminCompanies from '../pages/admin/Companies';
+import AdminStudents from '../pages/admin/Students';
 import AdminAnalytics from '../pages/admin/Analytics';
 
 const AppRoutes = () => (
@@ -49,6 +50,7 @@ const AppRoutes = () => (
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="add-company" element={<AdminAddCompany />} />
         <Route path="companies" element={<AdminCompanies />} />
+        <Route path="students" element={<AdminStudents />} />
         <Route path="analytics" element={<AdminAnalytics />} />
         <Route index element={<Navigate to="dashboard" replace />} />
       </Route>
