@@ -66,16 +66,19 @@ const StudentDashboard = () => {
   let name = raw.name;
   let resumeUploaded = raw.resumeUploaded;
   let skills = Array.isArray(raw.skills) ? raw.skills : [];
+  let keywords = Array.isArray(raw.keywords) ? raw.keywords : [];
   let missingSkills = Array.isArray(raw.missingSkills) ? raw.missingSkills : [];
   let roadmap = Array.isArray(raw.roadmap) ? raw.roadmap : [];
   let appliedCompanies = Array.isArray(raw.appliedCompanies) ? raw.appliedCompanies : [];
   let progress = raw.progress && typeof raw.progress === "object" ? raw.progress : { applied: 0, shortlisted: 0, interview: 0, selected: 0 };
+  let improvementSuggestions = Array.isArray(raw.improvementSuggestions) ? raw.improvementSuggestions : [];
 
   const useMock = import.meta.env.DEV && !name && skills.length === 0 && appliedCompanies.length === 0;
   if (useMock) {
     name = name || "Student";
     skills = ["JavaScript", "React", "Node.js"];
     missingSkills = ["System Design", "Communication"];
+    keywords = ["JavaScript developer", "frontend", "REST APIs"];
     roadmap = [
       { title: "Resume Basics", description: "Create a professional resume to get started.", url: null },
       { title: "Skills Assessment", description: "Identify skill gaps from your profile.", url: null },
@@ -176,6 +179,51 @@ const StudentDashboard = () => {
             )}
           </DashboardCard>
 
+          <DashboardCard title="AI Improvement Suggestions" subtitle="Personalised guidance from your resume">
+            {improvementSuggestions.length === 0 ? (
+              <p className="text-slate-500 text-sm py-4">
+                Upload your resume to get detailed suggestions on what to learn next.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {improvementSuggestions.map((item, idx) => (
+                  <div
+                    key={`${item.skill || "skill"}-${idx}`}
+                    className="rounded-xl border border-slate-100 bg-white/70 p-4 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="font-semibold text-slate-800">
+                        {item.skill || "Skill"}
+                      </h3>
+                    </div>
+                    {item.importance && (
+                      <p className="mt-2 text-xs text-slate-500">
+                        <span className="font-semibold text-slate-700">Why it matters:</span>{" "}
+                        {item.importance}
+                      </p>
+                    )}
+                    {item.howToImprove && (
+                      <p className="mt-2 text-xs text-slate-500">
+                        <span className="font-semibold text-slate-700">How to improve:</span>{" "}
+                        {item.howToImprove}
+                      </p>
+                    )}
+                    {item.resources && (
+                      <a
+                        href={item.resources}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-3 inline-flex text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+                      >
+                        View recommended resource →
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </DashboardCard>
+
           <DashboardCard title="Placement Roadmap" subtitle="Recommended steps">
             {roadmap.length === 0 ? (
               <p className="text-slate-500 text-sm py-4">Upload your resume for personalised suggestions.</p>
@@ -198,9 +246,10 @@ const StudentDashboard = () => {
         </div>
       </div>
 
-      {/* Skills row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Skills & keywords */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <SkillTags title="Extracted Skills" skills={skills} emptyMessage="No skills extracted yet." />
+        <SkillTags title="Resume Keywords" skills={keywords} emptyMessage="No keywords extracted yet." />
         <SkillTags title="Skill Gaps" skills={missingSkills} emptyMessage="No skill gaps detected." />
       </div>
     </div>

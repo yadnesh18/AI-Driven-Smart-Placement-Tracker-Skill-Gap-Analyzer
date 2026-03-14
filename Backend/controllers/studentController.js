@@ -1,6 +1,51 @@
 // controllers/studentController.js
 import User from "../models/user.js";
 import Company from "../models/Company.js";
+import pdfParse from "pdf-parse";
+import fs from "fs";
+import http from "http";
+import https from "https";
+import { extractResumeData } from "../utils/llmResumeParser.js";
+import {
+  generateSkillImprovement,
+  generateLearningRoadmap,
+} from "../utils/aiSkillAdvisor.js";
+
+const fetchPdfBuffer = async (file) => {
+  const target = file?.secure_url || file?.path;
+  if (!target) {
+    throw new Error("No file path or URL provided for resume");
+  }
+
+  // Cloudinary or any remote URL
+  if (/^https?:\/\//i.test(target)) {
+    const client = target.startsWith("https") ? https : http;
+    return new Promise((resolve, reject) => {
+      const chunks = [];
+      client
+        .get(target, (resStream) => {
+          resStream
+            .on("data", (chunk) => chunks.push(chunk))
+            .on("end", () => {
+              const buf = Buffer.concat(chunks);
+              if (!buf.length) {
+                return reject(new Error("Empty PDF stream received from remote URL"));
+              }
+              resolve(buf);
+            })
+            .on("error", (err) => reject(err));
+        })
+        .on("error", (err) => reject(err));
+    });
+  }
+
+  // Local filesystem path (legacy disk storage)
+  const buf = await fs.promises.readFile(target);
+  if (!buf.length) {
+    throw new Error("Local PDF file is empty");
+  }
+  return buf;
+};
 
 const ensureStudent = (user) => {
   if (user.role !== "student") {
@@ -21,7 +66,9 @@ export const getDashboard = async (req, res) => {
       name: user.name,
       resumeUploaded: Boolean(user.resumeUrl),
       skills: user.skills || [],
+      keywords: user.keywords || [],
       missingSkills: user.missingSkills || [],
+      improvementSuggestions: user.improvementSuggestions || [],
       roadmap: user.roadmap || [],
       appliedCompanies: user.appliedCompanies || [],
       progress: user.progress || {
@@ -50,12 +97,73 @@ export const uploadResume = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const resumePath = `uploads/${req.file.filename}`;
-    await User.findByIdAndUpdate(user._id, { resumeUrl: resumePath });
+    const resumeUrl = req.file.secure_url || req.file.path;
+    if (!resumeUrl) {
+      return res.status(500).json({ message: "Unable to determine resume URL" });
+    }
+
+    const buffer = await fetchPdfBuffer(req.file);
+
+    const parsed = await pdfParse(buffer);
+    const resumeText = parsed.text || "";
+
+    const { skills: extractedSkills, keywords } = await extractResumeData(
+      resumeText
+    );
+
+    const companies = await Company.find({});
+    const requiredSkillSet = new Set();
+    for (const company of companies) {
+      (company.requiredSkills || []).forEach((s) => {
+        if (s && typeof s === "string") {
+          requiredSkillSet.add(s.trim());
+        }
+      });
+    }
+
+    const studentSkills = Array.from(
+      new Set(
+        [
+          ...(Array.isArray(extractedSkills) ? extractedSkills : []),
+          ...(Array.isArray(user.skills) ? user.skills : []),
+        ]
+          .map((s) => String(s).trim())
+          .filter(Boolean)
+      )
+    );
+
+    const studentSkillsLower = new Set(
+      studentSkills.map((s) => s.toLowerCase())
+    );
+
+    const missingSkills = Array.from(requiredSkillSet).filter(
+      (skill) => !studentSkillsLower.has(String(skill).toLowerCase())
+    );
+
+    const improvementSuggestions = await generateSkillImprovement(
+      missingSkills
+    );
+    const roadmap = await generateLearningRoadmap(missingSkills);
+
+    const update = {
+      resumeUrl,
+      skills: studentSkills,
+      keywords: Array.isArray(keywords) ? keywords : [],
+      missingSkills,
+      improvementSuggestions,
+      roadmap,
+    };
+
+    await User.findByIdAndUpdate(user._id, update);
 
     res.json({
-      message: "Resume uploaded successfully",
-      resumeUrl: resumePath,
+      message: "Resume uploaded and analyzed successfully",
+      resumeUrl,
+      skills: studentSkills,
+      keywords: update.keywords,
+      missingSkills,
+      improvementSuggestions,
+      roadmap,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

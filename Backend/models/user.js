@@ -30,6 +30,21 @@ const userSchema = new mongoose.Schema({
     type: [String],
     default: []
   },
+  keywords: {
+    type: [String],
+    default: []
+  },
+  improvementSuggestions: {
+    type: [
+      {
+        skill: String,
+        importance: String,
+        howToImprove: String,
+        resources: String
+      }
+    ],
+    default: []
+  },
   appliedCompanies: {
     type: [
       {
