@@ -8,9 +8,9 @@ const Register = () => {
   const [form, setForm] = useState({
     fullName: '',
     email: '',
+    role: '',
     password: '',
     confirmPassword: '',
-    role: 'student',
   });
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState('');
@@ -19,20 +19,21 @@ const Register = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   const validate = () => {
     const errs = {};
-    if (!form.fullName) errs.fullName = 'Full name is required';
-    if (!form.email) errs.email = 'Email is required';
+    if (!form.fullName) errs.fullName = 'Required';
+    if (!form.email) errs.email = 'Required';
     else if (!/^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$/.test(form.email))
-      errs.email = 'Invalid email format';
-    if (!form.password) errs.password = 'Password is required';
+      errs.email = 'Invalid email';
+    if (!form.password) errs.password = 'Required';
     else if (form.password.length < 6)
-      errs.password = 'Password must be at least 6 characters';
+      errs.password = 'Min 6 chars';
     if (form.password !== form.confirmPassword)
-      errs.confirmPassword = 'Passwords do not match';
-    if (!form.role) errs.role = 'Role is required';
+      errs.confirmPassword = 'Must match';
+    if (!form.role) errs.role = 'Required';
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -49,7 +50,6 @@ const Register = () => {
         password: form.password,
         role: form.role,
       });
-      // after successful registration, redirect to login
       navigate('/login', { replace: true });
     } catch (err) {
       console.error(err);
@@ -61,123 +61,417 @@ const Register = () => {
     }
   };
 
+  const inputStyle = (hasError) => ({
+    display: 'block',
+    width: '100%',
+    paddingLeft: '2.75rem',
+    paddingRight: '1rem',
+    paddingTop: '0.75rem',
+    paddingBottom: '0.75rem',
+    background: 'rgba(255, 255, 255, 0.03)',
+    border: hasError ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '0.5rem',
+    color: '#fff',
+    outline: 'none',
+    fontSize: '0.95rem',
+    transition: 'all 0.3s ease',
+  });
+
+  const inputFocus = (e, hasError) => {
+    e.target.style.boxShadow = hasError ? '0 0 0 2px rgba(239, 68, 68, 0.2)' : '0 0 0 2px rgba(59, 130, 246, 0.5)';
+    e.target.style.borderColor = hasError ? '#ef4444' : '#3b82f6';
+  };
+
+  const inputBlur = (e, hasError) => {
+    e.target.style.boxShadow = 'none';
+    e.target.style.borderColor = hasError ? 'rgba(239, 68, 68, 0.5)' : 'rgba(255, 255, 255, 0.1)';
+  };
+
   return (
-    <div className="min-h-screen w-full flex items-center justify-center
-                    bg-gradient-to-br from-gray-900 via-indigo-900 to-black
-                    relative overflow-hidden px-4 py-12">
-      {/* ambient blobs & overlay could be copied from Login if desired */}
-      <div className="relative z-10 w-full max-w-md mx-auto">
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/40 px-8 py-10">
-          <h2 className="text-white text-2xl font-semibold mb-1 text-center">
-            Create an account
-          </h2>
-          <p className="text-slate-400 text-sm mb-8 text-center">
-            Fill in the form to start your journey
-          </p>
-          {generalError && (
-            <p className="text-red-600 text-center mb-4">{generalError}</p>
-          )}
-          <form onSubmit={handleSubmit} noValidate>
-          <div className="mb-4">
-            <label htmlFor="fullName" className="block text-sm font-medium mb-1">
-              Full Name
-            </label>
-            <input
-              type="text"
-              name="fullName"
-              id="fullName"
-              value={form.fullName}
-              onChange={handleChange}
-              className="w-full bg-white/5 border rounded-lg px-4 py-2.5 text-white text-sm placeholder-slate-600 outline-none transition-all duration-150 focus:bg-white/8 focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500/20"
-            />
-            {errors.fullName && (
-              <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
-            )}
-          </div>
-          <div className="mb-4">
-            <label htmlFor="email" className="block text-sm font-medium mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              id="email"
-              value={form.email}
-              onChange={handleChange}
-              className="w-full bg-white/5 border rounded-lg px-4 py-2.5 text-white text-sm placeholder-slate-600 outline-none transition-all duration-150 focus:bg-white/8 focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500/20"
-            />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-            )}
-          </div>
-          <div className="mb-4">
-            <label htmlFor="password" className="block text-sm font-medium mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              id="password"
-              value={form.password}
-              onChange={handleChange}
-              className="w-full bg-white/5 border rounded-lg px-4 py-2.5 text-white text-sm placeholder-slate-600 outline-none transition-all duration-150 focus:bg-white/8 focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500/20"
-            />
-            {errors.password && (
-              <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-            )}
-          </div>
-          <div className="mb-4">
-            <label
-              htmlFor="confirmPassword"
-              className="block text-sm font-medium mb-1"
+    <div
+      className="flex flex-col lg:flex-row min-h-screen"
+      style={{ fontFamily: "'Inter', sans-serif", backgroundColor: '#0a0a0c' }}
+    >
+      {/* ── LEFT SIDE: BRANDING & FEATURES ── */}
+      <div
+        className="relative hidden lg:flex w-1/2 flex-col justify-between overflow-hidden"
+        style={{ backgroundColor: '#050505', padding: '4rem' }}
+      >
+        {/* Decorative Gradients */}
+        <div
+          className="absolute rounded-full"
+          style={{
+            top: '-6rem',
+            left: '-6rem',
+            width: '24rem',
+            height: '24rem',
+            background: 'rgba(99, 102, 241, 0.2)',
+            filter: 'blur(120px)',
+          }}
+        />
+        <div
+          className="absolute rounded-full"
+          style={{
+            bottom: 0,
+            right: 0,
+            width: '500px',
+            height: '500px',
+            background: 'rgba(139, 92, 246, 0.1)',
+            filter: 'blur(150px)',
+          }}
+        />
+
+        <div className="relative z-10">
+          {/* Logo */}
+          <div className="flex items-center gap-3 mb-20">
+            <div
+              className="flex items-center justify-center rounded-xl"
+              style={{
+                width: '2.5rem',
+                height: '2.5rem',
+                background: 'linear-gradient(to bottom right, #6366f1, #8b5cf6)',
+                boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.2)',
+              }}
             >
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              name="confirmPassword"
-              id="confirmPassword"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              className="w-full bg-white/5 border rounded-lg px-4 py-2.5 text-white text-sm placeholder-slate-600 outline-none transition-all duration-150 focus:bg-white/8 focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500/20"
-            />
-            {errors.confirmPassword && (
-              <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
-            )}
+              <span className="material-symbols-outlined text-white text-2xl">
+                analytics
+              </span>
+            </div>
+            <span className="text-xl font-bold tracking-tight text-white uppercase">
+              SPT{' '}
+              <span className="font-light opacity-70">Analyzer</span>
+            </span>
           </div>
-          <div className="mb-6">
-            <label htmlFor="role" className="block text-sm font-medium mb-1">
-              Role
-            </label>
-            <select
-              name="role"
-              id="role"
-              value={form.role}
-              onChange={handleChange}
-              className="w-full bg-white/5 border rounded-lg px-4 py-2.5 text-white text-sm placeholder-slate-600 outline-none transition-all duration-150 focus:bg-white/8 focus:ring-2 focus:border-indigo-500 focus:ring-indigo-500/20"
+
+          {/* Content */}
+          <div style={{ maxWidth: '36rem' }}>
+            <h2
+              className="text-5xl font-bold text-white mb-6"
+              style={{ lineHeight: 1.15 }}
             >
-              <option value="student">Student</option>
-              <option value="admin">Admin</option>
-            </select>
-            {errors.role && (
-              <p className="text-red-500 text-sm mt-1">{errors.role}</p>
-            )}
+              The future of{' '}
+              <span
+                style={{
+                  background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                talent acquisition
+              </span>{' '}
+              is here.
+            </h2>
+            <p className="text-xl mb-12" style={{ color: '#94a3b8' }}>
+              Empowering recruiters with AI-driven insights to find the perfect match faster than ever before.
+            </p>
+
+            {/* Features */}
+            <div className="space-y-8">
+              <div className="flex items-start gap-4">
+                <div
+                  className="rounded-lg flex items-center justify-center shrink-0"
+                  style={{
+                    width: '2.5rem',
+                    height: '2.5rem',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ color: '#6366f1' }}>
+                    psychology
+                  </span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">AI Resume Analysis</h4>
+                  <p className="text-sm" style={{ color: '#64748b' }}>
+                    Extract deep insights from resumes automatically.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div
+                  className="rounded-lg flex items-center justify-center shrink-0"
+                  style={{
+                    width: '2.5rem',
+                    height: '2.5rem',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ color: '#8b5cf6' }}>
+                    radar
+                  </span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">Skill Gap Detection</h4>
+                  <p className="text-sm" style={{ color: '#64748b' }}>
+                    Identify missing skills in candidates instantly.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div
+                  className="rounded-lg flex items-center justify-center shrink-0"
+                  style={{
+                    width: '2.5rem',
+                    height: '2.5rem',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ color: '#3b82f6' }}>
+                    account_tree
+                  </span>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">Automated Pipelines</h4>
+                  <p className="text-sm" style={{ color: '#64748b' }}>
+                    Move candidates through stages with zero manual effort.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-2 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-lg py-3 transition-all duration-200 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-px active:translate-y-0"
+        </div>
+
+        {/* Footer Stats */}
+        <div
+          className="relative z-10 flex items-center gap-12 pt-12"
+          style={{ borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}
+        >
+          <div>
+            <p className="text-2xl font-bold text-white">98%</p>
+            <p
+              className="text-xs uppercase font-medium"
+              style={{ letterSpacing: '0.1em', color: '#64748b' }}
+            >
+              Match Accuracy
+            </p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold text-white">10k+</p>
+            <p
+              className="text-xs uppercase font-medium"
+              style={{ letterSpacing: '0.1em', color: '#64748b' }}
+            >
+              Daily Scans
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── RIGHT SIDE: REGISTER FORM ── */}
+      <div 
+        className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 lg:p-12 relative"
+        style={{
+          backgroundColor: '#0a0a0c',
+          backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.05) 1.5px, transparent 1.5px)',
+          backgroundSize: '24px 24px'
+        }}
+      >
+        {/* Mobile Logo */}
+        <div className="lg:hidden flex items-center gap-3 mb-10 mt-6">
+          <div
+            className="flex items-center justify-center rounded-lg text-white"
+            style={{
+              width: '2rem',
+              height: '2rem',
+              backgroundColor: '#6366f1',
+            }}
           >
-            {loading ? 'Registering...' : 'Register'}
-          </button>
-        </form>
-        <p className="mt-4 text-center text-sm">
-          Already have an account?{' '}
-          <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors duration-150 underline underline-offset-2">
-            Login
-          </Link>
-        </p>
-        </div> {/* end card */}
+            <span className="material-symbols-outlined text-xl">analytics</span>
+          </div>
+          <h1 className="text-lg font-bold text-white uppercase tracking-tight">
+            SPT <span className="font-light">Analyzer</span>
+          </h1>
+        </div>
+
+        {/* Glass Card */}
+        <div
+          className="w-full relative"
+          style={{
+            maxWidth: '32rem',
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '1rem',
+            padding: '2.5rem',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(16px)',
+          }}
+        >
+          {/* Header */}
+          <div className="mb-8 text-center">
+            <h2 className="text-3xl font-bold text-white mb-2">Create an account</h2>
+            <p style={{ color: '#94a3b8', fontSize: '1rem' }}>
+              Join the next generation of recruitment.
+            </p>
+          </div>
+
+          {generalError && (
+            <div className="flex items-start gap-3 rounded-lg px-4 py-3 mb-6" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+              <span className="material-symbols-outlined text-lg mt-0.5" style={{ color: '#f87171' }}>error</span>
+              <p className="text-sm" style={{ color: '#f87171' }}>{generalError}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} noValidate className="space-y-5">
+            
+            {/* Full Name */}
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-white">Full Name</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="material-symbols-outlined text-lg" style={{ color: '#64748b' }}>person</span>
+                </div>
+                <input
+                  type="text"
+                  name="fullName"
+                  value={form.fullName}
+                  onChange={handleChange}
+                  placeholder="John Doe"
+                  style={inputStyle(errors.fullName)}
+                  onFocus={(e) => inputFocus(e, errors.fullName)}
+                  onBlur={(e) => inputBlur(e, errors.fullName)}
+                />
+              </div>
+              {errors.fullName && <p className="text-xs mt-1 text-red-500">{errors.fullName}</p>}
+            </div>
+
+            {/* Email Address */}
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-white">Email Address</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="material-symbols-outlined text-lg" style={{ color: '#64748b' }}>mail</span>
+                </div>
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="name@company.com"
+                  style={inputStyle(errors.email)}
+                  onFocus={(e) => inputFocus(e, errors.email)}
+                  onBlur={(e) => inputBlur(e, errors.email)}
+                />
+              </div>
+              {errors.email && <p className="text-xs mt-1 text-red-500">{errors.email}</p>}
+            </div>
+
+            {/* Role */}
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-white">Role</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="material-symbols-outlined text-lg" style={{ color: '#64748b' }}>work</span>
+                </div>
+                <select
+                  name="role"
+                  value={form.role}
+                  onChange={handleChange}
+                  style={{ ...inputStyle(errors.role), appearance: 'none' }}
+                  onFocus={(e) => inputFocus(e, errors.role)}
+                  onBlur={(e) => inputBlur(e, errors.role)}
+                >
+                  <option value="" disabled className="bg-gray-900">Select your role</option>
+                  <option value="student" className="bg-gray-900 text-white">Student</option>
+                  <option value="admin" className="bg-gray-900 text-white">Admin</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <span className="material-symbols-outlined text-lg" style={{ color: '#64748b' }}>expand_more</span>
+                </div>
+              </div>
+              {errors.role && <p className="text-xs mt-1 text-red-500">{errors.role}</p>}
+            </div>
+
+            {/* Passwords */}
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-semibold mb-2 text-white">Password</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="material-symbols-outlined text-lg" style={{ color: '#64748b' }}>lock</span>
+                  </div>
+                  <input
+                    type="password"
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                    style={inputStyle(errors.password)}
+                    onFocus={(e) => inputFocus(e, errors.password)}
+                    onBlur={(e) => inputBlur(e, errors.password)}
+                  />
+                </div>
+                {errors.password && <p className="text-xs mt-1 text-red-500">{errors.password}</p>}
+              </div>
+
+              <div className="flex-1">
+                <label className="block text-sm font-semibold mb-2 text-white">Confirm Password</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="material-symbols-outlined text-lg" style={{ color: '#64748b' }}>autorenew</span>
+                  </div>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={form.confirmPassword}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                    style={inputStyle(errors.confirmPassword)}
+                    onFocus={(e) => inputFocus(e, errors.confirmPassword)}
+                    onBlur={(e) => inputBlur(e, errors.confirmPassword)}
+                  />
+                </div>
+                {errors.confirmPassword && <p className="text-xs mt-1 text-red-500">{errors.confirmPassword}</p>}
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div style={{ paddingTop: '0.5rem' }}>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex items-center justify-center font-bold relative overflow-hidden"
+                style={{
+                  backgroundColor: '#3b82f6',
+                  color: '#fff',
+                  padding: '0.875rem 1.5rem',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.7 : 1,
+                  transition: 'all 0.3s ease',
+                  fontSize: '1rem',
+                }}
+                onMouseEnter={(e) => {
+                  if (!loading) {
+                    e.currentTarget.style.backgroundColor = '#2563eb';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!loading) {
+                    e.currentTarget.style.backgroundColor = '#3b82f6';
+                  }
+                }}
+              >
+                {loading ? 'Creating Account...' : 'Create Account'}
+              </button>
+            </div>
+          </form>
+
+          {/* Login link */}
+          <div className="text-center mt-6 text-sm" style={{ color: '#94a3b8' }}>
+            Already have an account?{' '}
+            <Link
+              to="/login"
+              style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 500 }}
+              onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+              onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+            >
+              Sign in
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

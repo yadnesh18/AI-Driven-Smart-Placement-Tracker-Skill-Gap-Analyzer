@@ -1,6 +1,18 @@
 import React, { useState, useCallback, useRef } from "react";
 import api from "../../services/api";
-import { Upload as UploadIcon, FileText, CheckCircle, XCircle } from "lucide-react";
+import {
+  Upload as UploadIcon,
+  FileText,
+  CheckCircle,
+  XCircle,
+  Sparkles,
+  AlertTriangle,
+  BookOpen,
+  Lightbulb,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
 const StudentUpload = () => {
   const formRef = useRef(null);
@@ -9,6 +21,8 @@ const StudentUpload = () => {
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
   const [dragActive, setDragActive] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [expandedSuggestion, setExpandedSuggestion] = useState(null);
 
   const handleDrag = useCallback((e) => {
     e.preventDefault();
@@ -25,6 +39,7 @@ const StudentUpload = () => {
       setFile(droppedFile);
       setError(null);
       setSuccess(null);
+      setAnalysisResult(null);
     } else {
       setError("Please upload a PDF file only.");
     }
@@ -37,6 +52,7 @@ const StudentUpload = () => {
         setFile(selectedFile);
         setError(null);
         setSuccess(null);
+        setAnalysisResult(null);
       } else {
         setError("Please upload a PDF file only.");
         setFile(null);
@@ -53,6 +69,7 @@ const StudentUpload = () => {
     setUploading(true);
     setError(null);
     setSuccess(null);
+    setAnalysisResult(null);
 
     try {
       const formData = new FormData();
@@ -63,6 +80,7 @@ const StudentUpload = () => {
       });
 
       setSuccess(res.data.message || "Resume uploaded successfully!");
+      setAnalysisResult(res.data);
       setFile(null);
       formRef.current?.reset();
     } catch (err) {
@@ -78,12 +96,16 @@ const StudentUpload = () => {
     setSuccess(null);
   };
 
+  const toggleSuggestion = (idx) => {
+    setExpandedSuggestion(expandedSuggestion === idx ? null : idx);
+  };
+
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-4xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Upload Resume</h1>
         <p className="text-slate-500 mt-1">
-          Upload your PDF resume to get personalized skill analysis and recommendations.
+          Upload your PDF resume to get AI-powered skill analysis and personalized recommendations.
         </p>
       </div>
 
@@ -150,12 +172,12 @@ const StudentUpload = () => {
             {uploading ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Uploading…
+                Analyzing with AI…
               </>
             ) : (
               <>
                 <UploadIcon className="w-5 h-5" />
-                Upload Resume
+                Upload & Analyze Resume
               </>
             )}
           </button>
@@ -175,6 +197,218 @@ const StudentUpload = () => {
           )}
         </div>
       </div>
+
+      {/* ── AI ANALYSIS RESULTS ── */}
+      {analysisResult && (
+        <div className="space-y-6 animate-in fade-in">
+          {/* Header */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-violet-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">AI Analysis Results</h2>
+              <p className="text-sm text-slate-500">Here's what we found in your resume</p>
+            </div>
+          </div>
+
+          {/* Skills & Keywords Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Extracted Skills */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-100/80 p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <CheckCircle className="w-4 h-4 text-emerald-600" />
+                </div>
+                <h3 className="font-semibold text-slate-800">Extracted Skills</h3>
+                <span className="ml-auto text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  {(analysisResult.skills || []).length}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(analysisResult.skills || []).length > 0 ? (
+                  analysisResult.skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/50"
+                    >
+                      {skill}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-400">No skills extracted</p>
+                )}
+              </div>
+            </div>
+
+            {/* Resume Keywords */}
+            <div className="bg-white rounded-2xl shadow-md border border-slate-100/80 p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <Sparkles className="w-4 h-4 text-blue-600" />
+                </div>
+                <h3 className="font-semibold text-slate-800">Resume Keywords</h3>
+                <span className="ml-auto text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                  {(analysisResult.keywords || []).length}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(analysisResult.keywords || []).length > 0 ? (
+                  analysisResult.keywords.map((kw) => (
+                    <span
+                      key={kw}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200/50"
+                    >
+                      {kw}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-400">No keywords extracted</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Skill Gap Analysis */}
+          <div className="bg-white rounded-2xl shadow-md border border-slate-100/80 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                <AlertTriangle className="w-4 h-4 text-amber-600" />
+              </div>
+              <h3 className="font-semibold text-slate-800">Skill Gap Analysis</h3>
+              <span className="ml-auto text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                {(analysisResult.missingSkills || []).length} gaps
+              </span>
+            </div>
+            {(analysisResult.missingSkills || []).length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {analysisResult.missingSkills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/50"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-emerald-600 font-medium">
+                🎉 No skill gaps detected — you're well prepared!
+              </p>
+            )}
+          </div>
+
+          {/* AI Improvement Suggestions */}
+          {(analysisResult.improvementSuggestions || []).length > 0 && (
+            <div className="bg-white rounded-2xl shadow-md border border-slate-100/80 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
+                  <Lightbulb className="w-4 h-4 text-violet-600" />
+                </div>
+                <h3 className="font-semibold text-slate-800">AI Improvement Suggestions</h3>
+              </div>
+              <div className="space-y-3">
+                {analysisResult.improvementSuggestions.map((item, idx) => (
+                  <div
+                    key={`${item.skill}-${idx}`}
+                    className="rounded-xl border border-slate-100 bg-slate-50/50 overflow-hidden transition-all"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleSuggestion(idx)}
+                      className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-100/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-8 h-8 rounded-lg bg-violet-100 text-violet-700 text-xs font-bold flex items-center justify-center flex-shrink-0">
+                          {idx + 1}
+                        </span>
+                        <span className="font-semibold text-slate-800">{item.skill}</span>
+                      </div>
+                      {expandedSuggestion === idx ? (
+                        <ChevronUp className="w-4 h-4 text-slate-400" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-slate-400" />
+                      )}
+                    </button>
+                    {expandedSuggestion === idx && (
+                      <div className="px-4 pb-4 space-y-3 border-t border-slate-100">
+                        {item.importance && (
+                          <div className="mt-3">
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                              Why it matters
+                            </p>
+                            <p className="text-sm text-slate-700">{item.importance}</p>
+                          </div>
+                        )}
+                        {item.howToImprove && (
+                          <div>
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                              How to improve
+                            </p>
+                            <p className="text-sm text-slate-700">{item.howToImprove}</p>
+                          </div>
+                        )}
+                        {item.resources && (
+                          <a
+                            href={item.resources}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            View recommended resource
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Learning Roadmap */}
+          {(analysisResult.roadmap || []).length > 0 && (
+            <div className="bg-white rounded-2xl shadow-md border border-slate-100/80 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                  <BookOpen className="w-4 h-4 text-indigo-600" />
+                </div>
+                <h3 className="font-semibold text-slate-800">Learning Roadmap</h3>
+              </div>
+              <div className="space-y-4">
+                {analysisResult.roadmap.map((step, idx) => (
+                  <div key={idx} className="flex gap-4">
+                    <div className="flex flex-col items-center">
+                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 text-sm font-bold flex items-center justify-center">
+                        {idx + 1}
+                      </span>
+                      {idx < analysisResult.roadmap.length - 1 && (
+                        <div className="w-0.5 flex-1 bg-indigo-100 mt-1" />
+                      )}
+                    </div>
+                    <div className="pb-4">
+                      <p className="font-medium text-slate-800">{step.title}</p>
+                      <p className="text-sm text-slate-500 mt-0.5">{step.description}</p>
+                      {step.url && (
+                        <a
+                          href={step.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 mt-1.5"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          Resource link
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

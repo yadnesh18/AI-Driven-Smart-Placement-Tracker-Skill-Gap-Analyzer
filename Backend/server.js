@@ -1,8 +1,8 @@
-import express from 'express';
-import cors from 'cors';
+import 'dotenv/config';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from "./routes/authRoutes.js";
 import studentRoutes from "./routes/studentRoutes.js";
@@ -12,7 +12,11 @@ import adminRoutes from "./routes/adminRoutes.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config();
+// Debug: verify critical env vars are loaded
+console.log("Env check — MONGODB_URI:", !!process.env.MONGODB_URI);
+console.log("Env check — OPENROUTER_API_KEY:", !!process.env.OPENROUTER_API_KEY);
+console.log("Env check — CLOUDINARY_CLOUD_NAME:", !!process.env.CLOUDINARY_CLOUD_NAME);
+console.log("Env check — JWT_SECRET:", !!process.env.JWT_SECRET);
 
 const app = express();
 app.use(cors());

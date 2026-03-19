@@ -1,8 +1,9 @@
 import multer from "multer";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
 import path from "path";
 import { fileURLToPath } from "url";
-import cloudinary from "./cloudinary.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ["application/pdf"];
@@ -13,18 +14,15 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: "resumes",
-    resource_type: "raw",
-    format: "pdf",
-    public_id: (req, file) => {
-      const base =
-        (file.originalname && path.parse(file.originalname).name) || "resume";
-      const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-      return `${base}-${uniqueSuffix}`;
-    },
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, "..", "uploads"));
+  },
+  filename: (req, file, cb) => {
+    const base =
+      (file.originalname && path.parse(file.originalname).name) || "resume";
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `${base}-${uniqueSuffix}.pdf`);
   },
 });
 

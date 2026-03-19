@@ -22,6 +22,21 @@ const companySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    location: {
+      type: String,
+      default: "",
+    },
+    deadline: {
+      type: Date,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    logoUrl: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );

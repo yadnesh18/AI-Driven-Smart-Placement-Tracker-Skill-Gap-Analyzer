@@ -2,14 +2,68 @@ import express from "express";
 import {
   getAdminDashboard,
   getAdminAnalytics,
+  getStudents,
 } from "../controllers/adminController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import Company from "../models/Company.js";
+import User from "../models/user.js";
 
 const router = express.Router();
 
 router.get("/dashboard", protect, getAdminDashboard);
 router.get("/analytics", protect, getAdminAnalytics);
+router.get("/students", protect, getStudents);
+
+// Update student application status
+router.put("/students/:id/status", protect, async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const { id } = req.params;
+    const { companyId, status } = req.body;
+
+    if (!companyId || !status) {
+      return res.status(400).json({ message: "companyId and status are required" });
+    }
+
+    const validStatuses = ["applied", "shortlisted", "interview", "selected", "rejected"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
+    }
+
+    const student = await User.findById(id);
+    if (!student || student.role !== "student") {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    const appIndex = student.appliedCompanies.findIndex(
+      (a) => a.companyId && a.companyId.toString() === companyId
+    );
+
+    if (appIndex === -1) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    const oldStatus = student.appliedCompanies[appIndex].status;
+    student.appliedCompanies[appIndex].status = status;
+
+    // Update progress counters
+    if (student.progress) {
+      if (oldStatus && student.progress[oldStatus] > 0) {
+        student.progress[oldStatus] -= 1;
+      }
+      student.progress[status] = (student.progress[status] || 0) + 1;
+    }
+
+    await student.save();
+
+    res.json({ message: "Status updated successfully", student: { _id: student._id, appliedCompanies: student.appliedCompanies, progress: student.progress } });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 router.post("/company", protect, async (req, res) => {
   try {
@@ -17,7 +71,7 @@ router.post("/company", protect, async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
 
-    const { name, role, package: pkg, requiredSkills, description } = req.body;
+    const { name, role, package: pkg, requiredSkills, description, location, deadline, isActive, logoUrl } = req.body;
     if (!name || !role || typeof pkg === "undefined") {
       return res.status(400).json({ message: "Name, role and package are required" });
     }
@@ -32,6 +86,10 @@ router.post("/company", protect, async (req, res) => {
         ? requiredSkills.split(",").map((s) => s.trim()).filter(Boolean)
         : [],
       description: description || "",
+      location: location || "",
+      deadline: deadline || undefined,
+      isActive: isActive !== undefined ? isActive : true,
+      logoUrl: logoUrl || "",
     });
 
     res.status(201).json(company);

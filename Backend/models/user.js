@@ -22,6 +22,27 @@ const userSchema = new mongoose.Schema({
   resumeUrl: {
     type: String,
   },
+  resumePublicId: {
+    type: String,
+  },
+  resumeScore: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100,
+  },
+  branch: {
+    type: String,
+    default: "",
+  },
+  year: {
+    type: String,
+    default: "",
+  },
+  rollNumber: {
+    type: String,
+    default: "",
+  },
   skills: {
     type: [String],
     default: []
@@ -40,7 +61,7 @@ const userSchema = new mongoose.Schema({
         skill: String,
         importance: String,
         howToImprove: String,
-        resources: String
+        resources: [String]
       }
     ],
     default: []

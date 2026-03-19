@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const STORAGE_KEY = 'auth';
 const AuthContext = createContext(null);
@@ -22,20 +22,15 @@ function writeStored(state) {
   }
 }
 
-export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(null);
-  const [role, setRole] = useState(null);
-  const [user, setUser] = useState(null);
+// Read stored auth synchronously to avoid the flash-redirect on refresh
+const initialAuth = readStored();
 
-  // initialize from localStorage once
-  useEffect(() => {
-    const { token: t, role: r, user: u } = readStored();
-    if (t) setToken(t);
-    if (r) setRole(r);
-    // if storage has an explicit user object use it, otherwise fall back
-    if (u) setUser(u);
-    else if (r) setUser({ role: r });
-  }, []);
+export const AuthProvider = ({ children }) => {
+  const [token, setToken] = useState(initialAuth.token || null);
+  const [role, setRole] = useState(initialAuth.role || null);
+  const [user, setUser] = useState(
+    initialAuth.user || (initialAuth.role ? { role: initialAuth.role } : null)
+  );
 
   const login = ({ token: t, role: r, user: u }) => {
     setToken(t);

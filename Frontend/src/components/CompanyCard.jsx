@@ -1,5 +1,5 @@
 import React from "react";
-import { Building2, Briefcase, IndianRupee } from "lucide-react";
+import { Building2, Briefcase, IndianRupee, MapPin, Calendar } from "lucide-react";
 import SkillTag from "./SkillTag";
 
 const CompanyCard = ({
@@ -11,6 +11,14 @@ const CompanyCard = ({
 }) => {
   const pkg = typeof company.package === "number" ? `${company.package} LPA` : company.package || "Not disclosed";
   const skills = company.requiredSkills || [];
+  const matchPercent = typeof company.matchPercent === "number" ? company.matchPercent : null;
+
+  const matchColor =
+    matchPercent >= 75
+      ? "text-emerald-600 bg-emerald-50 border-emerald-200"
+      : matchPercent >= 40
+      ? "text-amber-600 bg-amber-50 border-amber-200"
+      : "text-red-500 bg-red-50 border-red-200";
 
   return (
     <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-slate-100/80 hover:border-indigo-100 group">
@@ -20,17 +28,38 @@ const CompanyCard = ({
             <Building2 className="w-7 h-7 text-white" strokeWidth={2} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">
-              {company.name}
-            </h3>
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">
+                {company.name}
+              </h3>
+              {matchPercent !== null && (
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full border whitespace-nowrap ${matchColor}`}>
+                  {matchPercent}% match
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-2 mt-1 text-indigo-600">
               <Briefcase className="w-4 h-4 flex-shrink-0" />
               <span className="text-sm font-medium">{company.role}</span>
             </div>
-            <div className="flex items-center gap-2 mt-2 text-slate-600">
-              <IndianRupee className="w-4 h-4 flex-shrink-0" />
-              <span className="text-sm font-semibold">{pkg}</span>
+            <div className="flex items-center gap-4 mt-2">
+              <div className="flex items-center gap-1 text-slate-600">
+                <IndianRupee className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm font-semibold">{pkg}</span>
+              </div>
+              {company.location && (
+                <div className="flex items-center gap-1 text-slate-500">
+                  <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="text-xs">{company.location}</span>
+                </div>
+              )}
             </div>
+            {company.deadline && (
+              <div className="flex items-center gap-1 mt-1.5 text-slate-400">
+                <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="text-xs">Deadline: {new Date(company.deadline).toLocaleDateString()}</span>
+              </div>
+            )}
           </div>
         </div>
 

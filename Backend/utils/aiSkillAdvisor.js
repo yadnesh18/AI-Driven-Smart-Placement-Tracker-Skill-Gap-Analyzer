@@ -1,14 +1,30 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+const MODEL_NAME = process.env.OPENROUTER_MODEL || "google/gemini-1.5-pro";
 
-const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-1.5-pro";
-
-const getClient = () => {
-  const apiKey = process.env.GEMINI_API_KEY;
+const fetchFromOpenRouter = async (prompt) => {
+  const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not configured");
+    throw new Error("OPENROUTER_API_KEY is not configured");
   }
-  const genAI = new GoogleGenerativeAI(apiKey);
-  return genAI.getGenerativeModel({ model: MODEL_NAME });
+
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: MODEL_NAME,
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenRouter API error: ${response.status} ${response.statusText} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0]?.message?.content || "";
 };
 
 const cleanJson = (raw) => {
@@ -37,8 +53,6 @@ export const generateSkillImprovement = async (missingSkills) => {
     return [];
   }
 
-  const model = getClient();
-
   const prompt = `
 You are a career mentor for software engineering students.
 
@@ -63,11 +77,8 @@ Return JSON format:
 ]
 `;
 
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  const rawText = response.text();
-
   try {
+    const rawText = await fetchFromOpenRouter(prompt);
     const parsed = JSON.parse(cleanJson(rawText));
     if (!Array.isArray(parsed)) return [];
 
@@ -80,7 +91,7 @@ Return JSON format:
       }))
       .filter((item) => item.skill);
   } catch (err) {
-    console.error("Failed to parse improvement JSON from LLM:", err);
+    console.error("Failed to fetch or parse improvement JSON from LLM:", err);
     return [];
   }
 };
@@ -93,8 +104,6 @@ export const generateLearningRoadmap = async (missingSkills) => {
   if (skills.length === 0) {
     return [];
   }
-
-  const model = getClient();
 
   const prompt = `
 You are a learning path designer for software engineering students.
@@ -120,11 +129,8 @@ Return strictly valid JSON in the following format:
 ]
 `;
 
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  const rawText = response.text();
-
   try {
+    const rawText = await fetchFromOpenRouter(prompt);
     const parsed = JSON.parse(cleanJson(rawText));
     if (!Array.isArray(parsed)) return [];
 
@@ -136,8 +142,7 @@ Return strictly valid JSON in the following format:
       }))
       .filter((item) => item.title);
   } catch (err) {
-    console.error("Failed to parse roadmap JSON from LLM:", err);
+    console.error("Failed to fetch or parse roadmap JSON from LLM:", err);
     return [];
   }
 };
-

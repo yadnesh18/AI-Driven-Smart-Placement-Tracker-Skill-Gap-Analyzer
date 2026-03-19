@@ -116,3 +116,19 @@ export const getAdminAnalytics = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getStudents = async (req, res) => {
+  try {
+    if (!ensureAdmin(req.user)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const students = await User.find({ role: "student" })
+      .select("name email skills missingSkills keywords resumeUrl appliedCompanies progress")
+      .lean();
+
+    res.json(students);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

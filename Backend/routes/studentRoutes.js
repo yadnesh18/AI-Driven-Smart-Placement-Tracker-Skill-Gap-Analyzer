@@ -29,7 +29,7 @@ router.post(
   uploadResume
 );
 router.get("/companies", protect, getCompanies);
-router.post("/apply-company", protect, applyCompany);
+router.post("/apply/:companyId", protect, applyCompany);
 router.get("/results", protect, getResults);
 router.get("/roadmap", protect, getRoadmap);
 

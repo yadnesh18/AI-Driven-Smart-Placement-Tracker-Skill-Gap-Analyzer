@@ -8,6 +8,8 @@ const AdminAddCompany = () => {
   const [pkg, setPkg] = useState("");
   const [skills, setSkills] = useState("");
   const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [deadline, setDeadline] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -36,6 +38,8 @@ const AdminAddCompany = () => {
         package: parsedPackage,
         requiredSkills,
         description,
+        location,
+        deadline: deadline || undefined,
       });
       setSuccess("Company added successfully.");
       setName("");
@@ -43,6 +47,8 @@ const AdminAddCompany = () => {
       setPkg("");
       setSkills("");
       setDescription("");
+      setLocation("");
+      setDeadline("");
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Failed to add company");
     } finally {
@@ -63,39 +69,62 @@ const AdminAddCompany = () => {
         onSubmit={handleSubmit}
         className="bg-white rounded-2xl shadow-md border border-slate-100/80 p-6 space-y-5"
       >
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">Company Name</label>
-          <input
-            type="text"
-            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Google"
-          />
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Company Name</label>
+            <input
+              type="text"
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Google"
+            />
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">Role</label>
-          <input
-            type="text"
-            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            placeholder="Software Engineer"
-          />
-        </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Role</label>
+            <input
+              type="text"
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              placeholder="Software Engineer"
+            />
+          </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">Package (LPA)</label>
-          <input
-            type="number"
-            min="0"
-            step="0.1"
-            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-            value={pkg}
-            onChange={(e) => setPkg(e.target.value)}
-            placeholder="24"
-          />
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Package (LPA)</label>
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+              value={pkg}
+              onChange={(e) => setPkg(e.target.value)}
+              placeholder="24"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Location</label>
+            <input
+              type="text"
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Bangalore, India"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Application Deadline</label>
+            <input
+              type="date"
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+            />
+          </div>
         </div>
 
         <div>

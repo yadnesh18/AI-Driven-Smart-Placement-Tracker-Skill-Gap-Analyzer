@@ -65,6 +65,7 @@ const StudentDashboard = () => {
   const raw = dashboard || {};
   let name = raw.name;
   let resumeUploaded = raw.resumeUploaded;
+  let resumeScore = typeof raw.resumeScore === "number" ? raw.resumeScore : 0;
   let skills = Array.isArray(raw.skills) ? raw.skills : [];
   let keywords = Array.isArray(raw.keywords) ? raw.keywords : [];
   let missingSkills = Array.isArray(raw.missingSkills) ? raw.missingSkills : [];
@@ -91,8 +92,7 @@ const StudentDashboard = () => {
   }
 
   const totalApps = (progress.applied || 0) + (progress.shortlisted || 0) + (progress.interview || 0) + (progress.selected || 0);
-  const skillScore = skills.length >= 5 ? 90 : skills.length >= 3 ? 70 : skills.length >= 1 ? 50 : 20;
-  const readinessPercent = Math.min(95, resumeUploaded ? 40 + skillScore * 0.5 : skillScore * 0.4);
+  const readinessPercent = Math.min(95, resumeUploaded ? 40 + resumeScore * 0.5 : resumeScore * 0.4);
 
   return (
     <div className="space-y-8">
@@ -109,7 +109,7 @@ const StudentDashboard = () => {
         <StatCard title="Applications Sent" value={progress.applied || 0} icon={Send} color="indigo" />
         <StatCard title="Interviews" value={progress.interview || 0} icon={Video} color="blue" />
         <StatCard title="Selected" value={progress.selected || 0} icon={Award} color="emerald" />
-        <StatCard title="Skill Score" value={`${skillScore}%`} icon={Target} color="violet" />
+        <StatCard title="Resume Score" value={`${resumeScore}/100`} icon={Target} color="violet" />
       </div>
 
       {/* Progress bar */}

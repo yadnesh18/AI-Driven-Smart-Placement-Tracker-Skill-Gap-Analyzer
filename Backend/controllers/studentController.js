@@ -1,51 +1,15 @@
 // controllers/studentController.js
 import User from "../models/user.js";
 import Company from "../models/Company.js";
+import cloudinary from "../config/cloudinary.js";
 import pdfParse from "pdf-parse";
 import fs from "fs";
-import http from "http";
-import https from "https";
-import { extractResumeData } from "../utils/llmResumeParser.js";
 import {
+  extractResumeData,
   generateSkillImprovement,
   generateLearningRoadmap,
-} from "../utils/aiSkillAdvisor.js";
-
-const fetchPdfBuffer = async (file) => {
-  const target = file?.secure_url || file?.path;
-  if (!target) {
-    throw new Error("No file path or URL provided for resume");
-  }
-
-  // Cloudinary or any remote URL
-  if (/^https?:\/\//i.test(target)) {
-    const client = target.startsWith("https") ? https : http;
-    return new Promise((resolve, reject) => {
-      const chunks = [];
-      client
-        .get(target, (resStream) => {
-          resStream
-            .on("data", (chunk) => chunks.push(chunk))
-            .on("end", () => {
-              const buf = Buffer.concat(chunks);
-              if (!buf.length) {
-                return reject(new Error("Empty PDF stream received from remote URL"));
-              }
-              resolve(buf);
-            })
-            .on("error", (err) => reject(err));
-        })
-        .on("error", (err) => reject(err));
-    });
-  }
-
-  // Local filesystem path (legacy disk storage)
-  const buf = await fs.promises.readFile(target);
-  if (!buf.length) {
-    throw new Error("Local PDF file is empty");
-  }
-  return buf;
-};
+  generateResumeScore,
+} from "../utils/aiService.js";
 
 const ensureStudent = (user) => {
   if (user.role !== "student") {
@@ -65,6 +29,7 @@ export const getDashboard = async (req, res) => {
     const dashboard = {
       name: user.name,
       resumeUploaded: Boolean(user.resumeUrl),
+      resumeScore: user.resumeScore || 0,
       skills: user.skills || [],
       keywords: user.keywords || [],
       missingSkills: user.missingSkills || [],
@@ -85,7 +50,7 @@ export const getDashboard = async (req, res) => {
   }
 };
 
-// Upload resume - file comes from multer
+// Upload resume - file comes from multer disk storage
 export const uploadResume = async (req, res) => {
   try {
     const user = req.user;
@@ -97,20 +62,28 @@ export const uploadResume = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const resumeUrl = req.file.secure_url || req.file.path;
-    if (!resumeUrl) {
-      return res.status(500).json({ message: "Unable to determine resume URL" });
-    }
+    const localPath = req.file.path;
 
-    const buffer = await fetchPdfBuffer(req.file);
+    // Upload to Cloudinary
+    const uploadResult = await cloudinary.uploader.upload(localPath, {
+      resource_type: "raw",
+      folder: "resumes",
+    });
 
-    const parsed = await pdfParse(buffer);
+    const resumeUrl = uploadResult.secure_url;
+    const resumePublicId = uploadResult.public_id;
+
+    // Extract text from PDF
+    const fileBuffer = await fs.promises.readFile(localPath);
+    const parsed = await pdfParse(fileBuffer);
     const resumeText = parsed.text || "";
 
+    // AI-powered skill extraction
     const { skills: extractedSkills, keywords } = await extractResumeData(
       resumeText
     );
 
+    // Fetch company required skills
     const companies = await Company.find({});
     const requiredSkillSet = new Set();
     for (const company of companies) {
@@ -121,6 +94,7 @@ export const uploadResume = async (req, res) => {
       });
     }
 
+    // Merge extracted skills with any existing user skills
     const studentSkills = Array.from(
       new Set(
         [
@@ -136,17 +110,24 @@ export const uploadResume = async (req, res) => {
       studentSkills.map((s) => s.toLowerCase())
     );
 
+    // Detect missing skills
     const missingSkills = Array.from(requiredSkillSet).filter(
       (skill) => !studentSkillsLower.has(String(skill).toLowerCase())
     );
 
-    const improvementSuggestions = await generateSkillImprovement(
-      missingSkills
-    );
-    const roadmap = await generateLearningRoadmap(missingSkills);
+    // AI-powered improvement suggestions + roadmap + score
+    const [improvementSuggestions, roadmap, scoreResult] = await Promise.all([
+      generateSkillImprovement(missingSkills),
+      generateLearningRoadmap(missingSkills),
+      generateResumeScore(studentSkills, missingSkills, resumeText),
+    ]);
 
     const update = {
       resumeUrl,
+      resumePublicId,
+      resumeScore: scoreResult.score,
+      resumeScoreBreakdown: scoreResult.breakdown,
+      resumeScoreSummary: scoreResult.summary,
       skills: studentSkills,
       keywords: Array.isArray(keywords) ? keywords : [],
       missingSkills,
@@ -156,14 +137,23 @@ export const uploadResume = async (req, res) => {
 
     await User.findByIdAndUpdate(user._id, update);
 
+    // Cleanup local temp file
+    fs.promises.unlink(localPath).catch(() => {});
+
     res.json({
+      success: true,
       message: "Resume uploaded and analyzed successfully",
-      resumeUrl,
-      skills: studentSkills,
-      keywords: update.keywords,
-      missingSkills,
-      improvementSuggestions,
-      roadmap,
+      data: {
+        resumeUrl,
+        skills: studentSkills,
+        keywords: update.keywords,
+        missingSkills,
+        resumeScore: scoreResult.score,
+        resumeScoreBreakdown: scoreResult.breakdown,
+        resumeScoreSummary: scoreResult.summary,
+        improvementSuggestions,
+        roadmap,
+      },
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -178,7 +168,7 @@ export const getCompanies = async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
 
-    const companies = await Company.find({}).sort({ createdAt: -1 }).lean();
+    const companies = await Company.find({ isActive: true }).sort({ createdAt: -1 }).lean();
     const appliedIds = new Set(
       (user.appliedCompanies || [])
         .map((a) => (a.companyId ? a.companyId.toString() : null))
@@ -188,12 +178,26 @@ export const getCompanies = async (req, res) => {
       (user.appliedCompanies || []).map((a) => `${a.name}|${a.role}`)
     );
 
-    const withApplied = companies.map((c) => ({
-      ...c,
-      applied:
-        appliedIds.has(c._id.toString()) ||
-        appliedByNameRole.has(`${c.name}|${c.role}`),
-    }));
+    const studentSkillsLower = new Set(
+      (user.skills || []).map((s) => String(s).toLowerCase().trim())
+    );
+
+    const withApplied = companies.map((c) => {
+      const reqSkills = c.requiredSkills || [];
+      const matchCount = reqSkills.filter((s) =>
+        studentSkillsLower.has(String(s).toLowerCase().trim())
+      ).length;
+      const matchPercent =
+        reqSkills.length > 0 ? Math.round((matchCount / reqSkills.length) * 100) : 100;
+
+      return {
+        ...c,
+        applied:
+          appliedIds.has(c._id.toString()) ||
+          appliedByNameRole.has(`${c.name}|${c.role}`),
+        matchPercent,
+      };
+    });
 
     res.json(withApplied);
   } catch (error) {
@@ -201,7 +205,7 @@ export const getCompanies = async (req, res) => {
   }
 };
 
-// Apply to a company
+// Apply to a company (companyId from URL params)
 export const applyCompany = async (req, res) => {
   try {
     const user = req.user;
@@ -209,7 +213,7 @@ export const applyCompany = async (req, res) => {
       return res.status(403).json({ message: "Forbidden" });
     }
 
-    const { companyId } = req.body;
+    const { companyId } = req.params;
     if (!companyId) {
       return res.status(400).json({ message: "Company ID is required" });
     }
@@ -285,5 +289,3 @@ export const getRoadmap = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-

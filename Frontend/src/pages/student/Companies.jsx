@@ -28,7 +28,7 @@ const StudentCompanies = () => {
   const handleApply = async (companyId) => {
     setApplyingId(companyId);
     try {
-      await api.post("/student/apply-company", { companyId });
+      await api.post(`/student/apply/${companyId}`);
       setCompanies((prev) =>
         prev.map((c) => (c._id === companyId ? { ...c, applied: true } : c))
       );
