@@ -1,13 +1,13 @@
 
-const MODEL_NAME = process.env.OPENROUTER_MODEL || "google/gemini-1.5-pro";
+const MODEL_NAME = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
-const fetchFromOpenRouter = async (prompt) => {
-  const apiKey = process.env.OPENROUTER_API_KEY;
+const fetchFromGroq = async (prompt) => {
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    throw new Error("OPENROUTER_API_KEY is not configured");
+    throw new Error("GROQ_API_KEY is not configured");
   }
 
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${apiKey}`,
@@ -21,7 +21,7 @@ const fetchFromOpenRouter = async (prompt) => {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`OpenRouter API error: ${response.status} ${response.statusText} - ${errorText}`);
+    throw new Error(`Groq API error: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
   const data = await response.json();
@@ -71,7 +71,7 @@ ${resumeText}
 `;
 
   try {
-    const rawText = await fetchFromOpenRouter(prompt);
+    const rawText = await fetchFromGroq(prompt);
     const parsed = JSON.parse(cleanJson(rawText));
     const skills = Array.isArray(parsed.skills)
       ? parsed.skills.map((s) => String(s).trim()).filter(Boolean)

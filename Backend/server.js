@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 
 // Debug: verify critical env vars are loaded
 console.log("Env check — MONGODB_URI:", !!process.env.MONGODB_URI);
-console.log("Env check — OPENROUTER_API_KEY:", !!process.env.OPENROUTER_API_KEY);
+console.log("Env check — GROQ_API_KEY:", !!process.env.GROQ_API_KEY);
 console.log("Env check — CLOUDINARY_CLOUD_NAME:", !!process.env.CLOUDINARY_CLOUD_NAME);
 console.log("Env check — JWT_SECRET:", !!process.env.JWT_SECRET);
 
