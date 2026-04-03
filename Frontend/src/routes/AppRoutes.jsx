@@ -12,6 +12,7 @@ import StudentUpload from '../pages/student/Upload';
 import StudentCompanies from '../pages/student/Companies';
 import StudentResult from '../pages/student/Result';
 import StudentRoadmap from '../pages/student/Roadmap';
+import StudentNotifications from '../pages/student/Notifications';
 
 import AdminDashboard from '../pages/admin/Dashboard';
 import AdminAddCompany from '../pages/admin/AddCompany';
@@ -36,6 +37,7 @@ const AppRoutes = () => (
         <Route path="companies" element={<StudentCompanies />} />
         <Route path="result" element={<StudentResult />} />
         <Route path="roadmap" element={<StudentRoadmap />} />
+        <Route path="notifications" element={<StudentNotifications />} />
         <Route index element={<Navigate to="dashboard" replace />} />
       </Route>
     </Route>

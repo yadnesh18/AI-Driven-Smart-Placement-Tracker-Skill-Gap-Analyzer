@@ -12,6 +12,7 @@ import {
   X,
   GraduationCap,
   Briefcase,
+  Bell,
 } from "lucide-react";
 
 const studentLinks = [
@@ -20,6 +21,7 @@ const studentLinks = [
   { name: "Companies", to: "/student/companies", icon: Building2 },
   { name: "Applications", to: "/student/result", icon: FileCheck },
   { name: "Skill Roadmap", to: "/student/roadmap", icon: Map },
+  { name: "Notifications", to: "/student/notifications", icon: Bell },
 ];
 
 const adminLinks = [

@@ -1,17 +1,16 @@
 import api from './api';
 
+// Run analysis for a specific company
+export const runAnalysis = (companyId) => {
+  return api.post('/student/analysis/run', { companyId });
+};
+
+// Get skill radar data (latest analysis)
 export const getSkillRadarData = () => {
-  return api.get('/analysis/skill-radar');
+  return api.get('/student/analysis/skill-radar');
 };
 
-export const getEligibilitySummary = () => {
-  return api.get('/analysis/eligibility');
-};
-
-export const getSkillDistribution = () => {
-  return api.get('/analysis/skill-distribution');
-};
-
-export const getCommonMissingSkills = () => {
-  return api.get('/analysis/common-missing');
+// Generate personalised roadmap
+export const generateRoadmap = (data) => {
+  return api.post('/student/analysis/roadmap', data);
 };

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../../services/api";
 import { TableSkeleton } from "../../components/LoadingSkeleton";
 import EmptyState from "../../components/EmptyState";
-import { Briefcase, Trash2, Pencil, AlertCircle, X, CheckCircle, MapPin } from "lucide-react";
+import { Briefcase, Trash2, Pencil, AlertCircle, X, CheckCircle, MapPin, Users } from "lucide-react";
 
 const AdminCompanies = () => {
   const [companies, setCompanies] = useState([]);
@@ -17,7 +17,8 @@ const AdminCompanies = () => {
     const fetchCompanies = async () => {
       try {
         const res = await api.get("/admin/companies");
-        setCompanies(res.data);
+        // Backend returns { companies: [...] } with applicant counts
+        setCompanies(res.data.companies || res.data || []);
       } catch (err) {
         setError(err.response?.data?.message || err.message || "Failed to load companies");
       } finally {
@@ -73,7 +74,7 @@ const AdminCompanies = () => {
         isActive: editForm.isActive,
       };
       const res = await api.put(`/companies/${id}`, payload);
-      setCompanies((prev) => prev.map((c) => (c._id === id ? res.data : c)));
+      setCompanies((prev) => prev.map((c) => (c._id === id ? { ...c, ...res.data } : c)));
       setEditingCompany(null);
     } catch (err) {
       alert(err.response?.data?.message || err.message || "Failed to update company");
@@ -101,7 +102,7 @@ const AdminCompanies = () => {
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Manage Companies</h1>
         <p className="text-slate-500 mt-1">
-          View, edit, and manage all companies available for student applications.
+          View, edit, and manage all companies. Applicant stats shown per company.
         </p>
       </div>
 
@@ -122,102 +123,53 @@ const AdminCompanies = () => {
                 className="bg-white rounded-2xl shadow-md border border-slate-100/80 p-5 transition-all"
               >
                 {isEditing ? (
-                  /* ── Edit Mode ── */
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-slate-500 mb-1">Company Name</label>
-                        <input
-                          type="text"
-                          value={editForm.name}
-                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
+                        <input type="text" value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-500 mb-1">Role</label>
-                        <input
-                          type="text"
-                          value={editForm.role}
-                          onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
+                        <input type="text" value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-500 mb-1">Package (LPA)</label>
-                        <input
-                          type="number"
-                          value={editForm.package}
-                          onChange={(e) => setEditForm({ ...editForm, package: e.target.value })}
-                          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
+                        <input type="number" value={editForm.package} onChange={(e) => setEditForm({ ...editForm, package: e.target.value })} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-500 mb-1">Location</label>
-                        <input
-                          type="text"
-                          value={editForm.location}
-                          onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
-                          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
+                        <input type="text" value={editForm.location} onChange={(e) => setEditForm({ ...editForm, location: e.target.value })} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-slate-500 mb-1">Deadline</label>
-                        <input
-                          type="date"
-                          value={editForm.deadline}
-                          onChange={(e) => setEditForm({ ...editForm, deadline: e.target.value })}
-                          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
+                        <input type="date" value={editForm.deadline} onChange={(e) => setEditForm({ ...editForm, deadline: e.target.value })} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                       </div>
                       <div className="flex items-center gap-2 pt-5">
-                        <input
-                          type="checkbox"
-                          checked={editForm.isActive}
-                          onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
-                          className="w-4 h-4 accent-indigo-600"
-                        />
+                        <input type="checkbox" checked={editForm.isActive} onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })} className="w-4 h-4 accent-indigo-600" />
                         <label className="text-sm text-slate-700">Active</label>
                       </div>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-500 mb-1">Required Skills (comma separated)</label>
-                      <input
-                        type="text"
-                        value={editForm.requiredSkills}
-                        onChange={(e) => setEditForm({ ...editForm, requiredSkills: e.target.value })}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
+                      <input type="text" value={editForm.requiredSkills} onChange={(e) => setEditForm({ ...editForm, requiredSkills: e.target.value })} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-slate-500 mb-1">Description</label>
-                      <textarea
-                        value={editForm.description}
-                        onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                        rows={2}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-                      />
+                      <textarea value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} rows={2} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
                     </div>
                     <div className="flex gap-3">
-                      <button
-                        onClick={() => handleSaveEdit(company._id)}
-                        disabled={saving}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-                      >
+                      <button onClick={() => handleSaveEdit(company._id)} disabled={saving} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors">
                         <CheckCircle className="w-4 h-4" />
                         {saving ? "Saving..." : "Save"}
                       </button>
-                      <button
-                        onClick={cancelEditing}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-slate-700 font-medium text-sm hover:bg-slate-50 transition-colors"
-                      >
+                      <button onClick={cancelEditing} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 text-slate-700 font-medium text-sm hover:bg-slate-50 transition-colors">
                         <X className="w-4 h-4" />
                         Cancel
                       </button>
                     </div>
                   </div>
                 ) : (
-                  /* ── View Mode ── */
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-3">
@@ -233,6 +185,21 @@ const AdminCompanies = () => {
                           <span className="text-xs">{company.location}</span>
                         </div>
                       )}
+
+                      {/* Applicant Stats (Issue 6) */}
+                      <div className="flex items-center gap-4 mt-2">
+                        <div className="flex items-center gap-1.5 text-sm">
+                          <Users className="w-4 h-4 text-slate-400" />
+                          <span className="font-medium text-slate-700">{company.totalApplicants || 0}</span>
+                          <span className="text-slate-400">analyzed</span>
+                        </div>
+                        {company.eligibleCount > 0 && (
+                          <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                            {company.eligibleCount} eligible
+                          </span>
+                        )}
+                      </div>
+
                       {(company.requiredSkills || []).length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-2">
                           {company.requiredSkills.map((s) => (

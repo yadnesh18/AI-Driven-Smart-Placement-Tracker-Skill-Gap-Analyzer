@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import api from "../../services/api";
 import {
   Upload as UploadIcon,
@@ -12,6 +12,9 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
+  Clock,
+  Star,
+  History,
 } from "lucide-react";
 
 const StudentUpload = () => {
@@ -21,8 +24,38 @@ const StudentUpload = () => {
   const [success, setSuccess] = useState(null);
   const [error, setError] = useState(null);
   const [dragActive, setDragActive] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState(null);
-  const [expandedSuggestion, setExpandedSuggestion] = useState(null);
+  const [uploadResult, setUploadResult] = useState(null);
+  const [resumeHistory, setResumeHistory] = useState([]);
+  const [activeResumeDetail, setActiveResumeDetail] = useState(null);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
+  const [activatingId, setActivatingId] = useState(null);
+
+  // Load resume history on mount
+  useEffect(() => {
+    loadResumeHistory();
+  }, []);
+
+  const loadResumeHistory = async () => {
+    try {
+      const [histRes, statusRes] = await Promise.allSettled([
+        api.get("/student/resume/all"),
+        api.get("/student/resume/status"),
+      ]);
+      if (histRes.status === "fulfilled") {
+        setResumeHistory(histRes.value.data.resumes || []);
+      }
+      if (statusRes.status === "fulfilled" && statusRes.value.data.resumeId) {
+        // Load active resume detail
+        try {
+          const detailRes = await api.get(`/student/resume/${statusRes.value.data.resumeId}`);
+          setActiveResumeDetail(detailRes.data);
+        } catch {}
+      }
+    } catch {} finally {
+      setLoadingHistory(false);
+    }
+  };
 
   const handleDrag = useCallback((e) => {
     e.preventDefault();
@@ -39,7 +72,7 @@ const StudentUpload = () => {
       setFile(droppedFile);
       setError(null);
       setSuccess(null);
-      setAnalysisResult(null);
+      setUploadResult(null);
     } else {
       setError("Please upload a PDF file only.");
     }
@@ -52,7 +85,7 @@ const StudentUpload = () => {
         setFile(selectedFile);
         setError(null);
         setSuccess(null);
-        setAnalysisResult(null);
+        setUploadResult(null);
       } else {
         setError("Please upload a PDF file only.");
         setFile(null);
@@ -69,7 +102,7 @@ const StudentUpload = () => {
     setUploading(true);
     setError(null);
     setSuccess(null);
-    setAnalysisResult(null);
+    setUploadResult(null);
 
     try {
       const formData = new FormData();
@@ -80,13 +113,28 @@ const StudentUpload = () => {
       });
 
       setSuccess(res.data.message || "Resume uploaded successfully!");
-      setAnalysisResult(res.data);
+      setUploadResult(res.data);
       setFile(null);
       formRef.current?.reset();
+
+      // Refresh history after short delay (background processing)
+      setTimeout(() => loadResumeHistory(), 3000);
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Upload failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleActivate = async (resumeId) => {
+    setActivatingId(resumeId);
+    try {
+      await api.put(`/student/resume/${resumeId}/activate`);
+      await loadResumeHistory();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to activate resume");
+    } finally {
+      setActivatingId(null);
     }
   };
 
@@ -96,19 +144,16 @@ const StudentUpload = () => {
     setSuccess(null);
   };
 
-  const toggleSuggestion = (idx) => {
-    setExpandedSuggestion(expandedSuggestion === idx ? null : idx);
-  };
-
   return (
     <div className="max-w-4xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Upload Resume</h1>
         <p className="text-slate-500 mt-1">
-          Upload your PDF resume to get AI-powered skill analysis and personalized recommendations.
+          Upload your PDF resume to get AI-powered skill analysis. You can upload multiple versions.
         </p>
       </div>
 
+      {/* Upload Area */}
       <div className="bg-white rounded-2xl shadow-md border border-slate-100/80 overflow-hidden">
         <form
           ref={formRef}
@@ -172,7 +217,7 @@ const StudentUpload = () => {
             {uploading ? (
               <>
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Analyzing with AI…
+                Uploading & Analyzing…
               </>
             ) : (
               <>
@@ -185,7 +230,14 @@ const StudentUpload = () => {
           {success && (
             <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 flex items-center gap-3">
               <CheckCircle className="w-6 h-6 text-emerald-600 flex-shrink-0" />
-              <p className="font-medium text-emerald-800">{success}</p>
+              <div>
+                <p className="font-medium text-emerald-800">{success}</p>
+                {uploadResult && (
+                  <p className="text-xs text-emerald-600 mt-1">
+                    Version {uploadResult.version} • Processing skills in background…
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -198,217 +250,176 @@ const StudentUpload = () => {
         </div>
       </div>
 
-      {/* ── AI ANALYSIS RESULTS ── */}
-      {analysisResult && (
-        <div className="space-y-6 animate-in fade-in">
-          {/* Header */}
+      {/* Active Resume Detail (Issue 3) */}
+      {activeResumeDetail && (
+        <div className="bg-white rounded-2xl shadow-md border border-slate-100/80 p-6 space-y-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-violet-600" />
             </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-bold text-slate-800">Active Resume Details</h2>
+              <p className="text-sm text-slate-500">
+                {activeResumeDetail.filename} • Version {activeResumeDetail.version}
+              </p>
+            </div>
+            {activeResumeDetail.fileUrl && (
+              <a
+                href={activeResumeDetail.fileUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-700"
+              >
+                <ExternalLink className="w-4 h-4" />
+                View PDF
+              </a>
+            )}
+          </div>
+
+          {/* Score */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-3xl font-bold text-slate-800">{activeResumeDetail.score || 0}</span>
+              <span className="text-sm text-slate-500">/100</span>
+            </div>
+            {activeResumeDetail.scoreBreakdown && (
+              <p className="text-sm text-slate-600">{activeResumeDetail.scoreBreakdown}</p>
+            )}
+          </div>
+
+          {/* Extracted Skills */}
+          {(activeResumeDetail.extractedSkills || []).length > 0 && (
             <div>
-              <h2 className="text-xl font-bold text-slate-800">AI Analysis Results</h2>
-              <p className="text-sm text-slate-500">Here's what we found in your resume</p>
-            </div>
-          </div>
-
-          {/* Skills & Keywords Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Extracted Skills */}
-            <div className="bg-white rounded-2xl shadow-md border border-slate-100/80 p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-                  <CheckCircle className="w-4 h-4 text-emerald-600" />
-                </div>
-                <h3 className="font-semibold text-slate-800">Extracted Skills</h3>
-                <span className="ml-auto text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                  {(analysisResult.skills || []).length}
-                </span>
-              </div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                Extracted Skills ({activeResumeDetail.extractedSkills.length})
+              </p>
               <div className="flex flex-wrap gap-2">
-                {(analysisResult.skills || []).length > 0 ? (
-                  analysisResult.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/50"
-                    >
-                      {skill}
-                    </span>
-                  ))
-                ) : (
-                  <p className="text-sm text-slate-400">No skills extracted</p>
-                )}
-              </div>
-            </div>
-
-            {/* Resume Keywords */}
-            <div className="bg-white rounded-2xl shadow-md border border-slate-100/80 p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-blue-600" />
-                </div>
-                <h3 className="font-semibold text-slate-800">Resume Keywords</h3>
-                <span className="ml-auto text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                  {(analysisResult.keywords || []).length}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {(analysisResult.keywords || []).length > 0 ? (
-                  analysisResult.keywords.map((kw) => (
-                    <span
-                      key={kw}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200/50"
-                    >
-                      {kw}
-                    </span>
-                  ))
-                ) : (
-                  <p className="text-sm text-slate-400">No keywords extracted</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Skill Gap Analysis */}
-          <div className="bg-white rounded-2xl shadow-md border border-slate-100/80 p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-                <AlertTriangle className="w-4 h-4 text-amber-600" />
-              </div>
-              <h3 className="font-semibold text-slate-800">Skill Gap Analysis</h3>
-              <span className="ml-auto text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-                {(analysisResult.missingSkills || []).length} gaps
-              </span>
-            </div>
-            {(analysisResult.missingSkills || []).length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {analysisResult.missingSkills.map((skill) => (
+                {activeResumeDetail.extractedSkills.map((skill) => (
                   <span
                     key={skill}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200/50"
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/50"
                   >
                     {skill}
                   </span>
                 ))}
               </div>
-            ) : (
-              <p className="text-sm text-emerald-600 font-medium">
-                🎉 No skill gaps detected — you're well prepared!
-              </p>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* AI Improvement Suggestions */}
-          {(analysisResult.improvementSuggestions || []).length > 0 && (
-            <div className="bg-white rounded-2xl shadow-md border border-slate-100/80 p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
-                  <Lightbulb className="w-4 h-4 text-violet-600" />
-                </div>
-                <h3 className="font-semibold text-slate-800">AI Improvement Suggestions</h3>
-              </div>
-              <div className="space-y-3">
-                {analysisResult.improvementSuggestions.map((item, idx) => (
-                  <div
-                    key={`${item.skill}-${idx}`}
-                    className="rounded-xl border border-slate-100 bg-slate-50/50 overflow-hidden transition-all"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => toggleSuggestion(idx)}
-                      className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-100/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-lg bg-violet-100 text-violet-700 text-xs font-bold flex items-center justify-center flex-shrink-0">
-                          {idx + 1}
+          {/* Extracted From sections */}
+          {activeResumeDetail.extractedFrom && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {["skillsSection", "projectsSection", "educationSection"].map((section) => {
+                const items = activeResumeDetail.extractedFrom[section] || [];
+                if (items.length === 0) return null;
+                const label = section.replace("Section", "").replace(/([A-Z])/g, " $1").trim();
+                return (
+                  <div key={section}>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5">
+                      From {label}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {items.map((s) => (
+                        <span key={s} className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-xs">
+                          {s}
                         </span>
-                        <span className="font-semibold text-slate-800">{item.skill}</span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 text-xs text-slate-400">
+            <Clock className="w-3.5 h-3.5" />
+            Uploaded {new Date(activeResumeDetail.uploadedAt).toLocaleString()}
+            <span className={`font-medium px-2 py-0.5 rounded-full ${
+              activeResumeDetail.status === "done"
+                ? "bg-emerald-50 text-emerald-600"
+                : activeResumeDetail.status === "processing"
+                ? "bg-amber-50 text-amber-600"
+                : "bg-red-50 text-red-600"
+            }`}>
+              {activeResumeDetail.status}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Resume History (Issue 2) */}
+      <div className="bg-white rounded-2xl shadow-md border border-slate-100/80 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setShowHistory(!showHistory)}
+          className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50/50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+              <History className="w-4 h-4 text-indigo-600" />
+            </div>
+            <div className="text-left">
+              <h3 className="font-semibold text-slate-800">Resume History</h3>
+              <p className="text-xs text-slate-500">{resumeHistory.length} version{resumeHistory.length !== 1 ? "s" : ""} uploaded</p>
+            </div>
+          </div>
+          {showHistory ? (
+            <ChevronUp className="w-5 h-5 text-slate-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-slate-400" />
+          )}
+        </button>
+
+        {showHistory && (
+          <div className="border-t border-slate-100 px-6 py-4">
+            {loadingHistory ? (
+              <p className="text-sm text-slate-400 py-4 text-center">Loading…</p>
+            ) : resumeHistory.length === 0 ? (
+              <p className="text-sm text-slate-400 py-4 text-center">No resumes uploaded yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {resumeHistory.map((resume) => (
+                  <div
+                    key={resume.resumeId}
+                    className={`flex items-center justify-between rounded-xl border px-4 py-3 ${
+                      resume.isActive ? "border-indigo-200 bg-indigo-50/50" : "border-slate-100 bg-slate-50/50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-red-600" />
                       </div>
-                      {expandedSuggestion === idx ? (
-                        <ChevronUp className="w-4 h-4 text-slate-400" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-slate-400" />
-                      )}
-                    </button>
-                    {expandedSuggestion === idx && (
-                      <div className="px-4 pb-4 space-y-3 border-t border-slate-100">
-                        {item.importance && (
-                          <div className="mt-3">
-                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                              Why it matters
-                            </p>
-                            <p className="text-sm text-slate-700">{item.importance}</p>
-                          </div>
-                        )}
-                        {item.howToImprove && (
-                          <div>
-                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                              How to improve
-                            </p>
-                            <p className="text-sm text-slate-700">{item.howToImprove}</p>
-                          </div>
-                        )}
-                        {item.resources && (
-                          <a
-                            href={item.resources}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            View recommended resource
-                          </a>
-                        )}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-slate-800 text-sm">{resume.filename}</p>
+                          {resume.isActive && (
+                            <span className="text-xs font-medium text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <Star className="w-3 h-3" /> Active
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          v{resume.version} • Score: {resume.score || "—"} • {resume.status}
+                          {resume.uploadedAt && ` • ${new Date(resume.uploadedAt).toLocaleDateString()}`}
+                        </p>
                       </div>
+                    </div>
+                    {!resume.isActive && (
+                      <button
+                        onClick={() => handleActivate(resume.resumeId)}
+                        disabled={activatingId === resume.resumeId}
+                        className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-200 hover:bg-indigo-50 disabled:opacity-50 transition-colors"
+                      >
+                        {activatingId === resume.resumeId ? "…" : "Set Active"}
+                      </button>
                     )}
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Learning Roadmap */}
-          {(analysisResult.roadmap || []).length > 0 && (
-            <div className="bg-white rounded-2xl shadow-md border border-slate-100/80 p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-                  <BookOpen className="w-4 h-4 text-indigo-600" />
-                </div>
-                <h3 className="font-semibold text-slate-800">Learning Roadmap</h3>
-              </div>
-              <div className="space-y-4">
-                {analysisResult.roadmap.map((step, idx) => (
-                  <div key={idx} className="flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <span className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 text-sm font-bold flex items-center justify-center">
-                        {idx + 1}
-                      </span>
-                      {idx < analysisResult.roadmap.length - 1 && (
-                        <div className="w-0.5 flex-1 bg-indigo-100 mt-1" />
-                      )}
-                    </div>
-                    <div className="pb-4">
-                      <p className="font-medium text-slate-800">{step.title}</p>
-                      <p className="text-sm text-slate-500 mt-0.5">{step.description}</p>
-                      {step.url && (
-                        <a
-                          href={step.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 mt-1.5"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                          Resource link
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

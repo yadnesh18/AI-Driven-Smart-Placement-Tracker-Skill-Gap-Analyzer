@@ -1,0 +1,169 @@
+{
+  "System Design": {
+    "prepLink": "https://github.com/donnemartin/system-design-primer",
+    "prepLabel": "System Design Primer",
+    "resources": [
+      { "title": "System Design Primer (GitHub)", "url": "https://github.com/donnemartin/system-design-primer", "type": "free" },
+      { "title": "ByteByteGo Newsletter", "url": "https://bytebytego.com", "type": "free" },
+      { "title": "System Design YouTube Playlist", "url": "https://www.youtube.com/watch?v=UzLMhqg3_Wc", "type": "free" }
+    ]
+  },
+  "AWS": {
+    "prepLink": "https://aws.amazon.com/free/",
+    "prepLabel": "AWS Free Tier",
+    "resources": [
+      { "title": "AWS Free Tier Account Setup", "url": "https://aws.amazon.com/free/", "type": "free" },
+      { "title": "AWS Cloud Practitioner Essentials", "url": "https://aws.amazon.com/training/learn-about/cloud-practitioner/", "type": "free" },
+      { "title": "FreeCodeCamp AWS Tutorial", "url": "https://www.youtube.com/watch?v=ulprqHHWlng", "type": "free" }
+    ]
+  },
+  "DSA": {
+    "prepLink": "https://www.geeksforgeeks.org/data-structures/",
+    "prepLabel": "GeeksforGeeks DSA",
+    "resources": [
+      { "title": "Striver's SDE Sheet", "url": "https://takeuforward.org/interviews/strivers-sde-sheet-top-coding-interview-problems", "type": "free" },
+      { "title": "GeeksforGeeks Data Structures", "url": "https://www.geeksforgeeks.org/data-structures/", "type": "free" },
+      { "title": "NeetCode 150", "url": "https://neetcode.io/practice", "type": "free" }
+    ]
+  },
+  "React": {
+    "prepLink": "https://react.dev/learn",
+    "prepLabel": "React Official Tutorial",
+    "resources": [
+      { "title": "React Official Docs", "url": "https://react.dev/learn", "type": "free" },
+      { "title": "FreeCodeCamp React Course", "url": "https://www.freecodecamp.org/learn/front-end-development-libraries/", "type": "free" },
+      { "title": "React Tutorial YouTube", "url": "https://www.youtube.com/watch?v=bMknfKXIFA8", "type": "free" }
+    ]
+  },
+  "Node.js": {
+    "prepLink": "https://nodejs.org/en/learn",
+    "prepLabel": "Node.js Official Guides",
+    "resources": [
+      { "title": "Node.js Official Learn", "url": "https://nodejs.org/en/learn", "type": "free" },
+      { "title": "The Odin Project Node Path", "url": "https://www.theodinproject.com/paths/full-stack-javascript/courses/nodejs", "type": "free" },
+      { "title": "FreeCodeCamp Node.js", "url": "https://www.freecodecamp.org/learn/back-end-development-and-apis/", "type": "free" }
+    ]
+  },
+  "MongoDB": {
+    "prepLink": "https://www.mongodb.com/docs/manual/tutorial/",
+    "prepLabel": "MongoDB Tutorial",
+    "resources": [
+      { "title": "MongoDB University (Free)", "url": "https://learn.mongodb.com/", "type": "free" },
+      { "title": "MongoDB Official Docs", "url": "https://www.mongodb.com/docs/manual/tutorial/", "type": "free" }
+    ]
+  },
+  "Python": {
+    "prepLink": "https://www.python.org/about/gettingstarted/",
+    "prepLabel": "Python Getting Started",
+    "resources": [
+      { "title": "Python Official Tutorial", "url": "https://docs.python.org/3/tutorial/", "type": "free" },
+      { "title": "Automate the Boring Stuff", "url": "https://automatetheboringstuff.com/", "type": "free" },
+      { "title": "FreeCodeCamp Python", "url": "https://www.freecodecamp.org/learn/scientific-computing-with-python/", "type": "free" }
+    ]
+  },
+  "Java": {
+    "prepLink": "https://dev.java/learn/",
+    "prepLabel": "Java Official Learn",
+    "resources": [
+      { "title": "Java Official Tutorials", "url": "https://dev.java/learn/", "type": "free" },
+      { "title": "Baeldung Java Guides", "url": "https://www.baeldung.com/", "type": "free" }
+    ]
+  },
+  "SQL": {
+    "prepLink": "https://www.w3schools.com/sql/",
+    "prepLabel": "W3Schools SQL Tutorial",
+    "resources": [
+      { "title": "W3Schools SQL", "url": "https://www.w3schools.com/sql/", "type": "free" },
+      { "title": "SQLBolt", "url": "https://sqlbolt.com/", "type": "free" },
+      { "title": "Mode SQL Tutorial", "url": "https://mode.com/sql-tutorial/", "type": "free" }
+    ]
+  },
+  "JavaScript": {
+    "prepLink": "https://javascript.info/",
+    "prepLabel": "JavaScript.info",
+    "resources": [
+      { "title": "JavaScript.info", "url": "https://javascript.info/", "type": "free" },
+      { "title": "MDN JavaScript Guide", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide", "type": "free" },
+      { "title": "FreeCodeCamp JS", "url": "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures/", "type": "free" }
+    ]
+  },
+  "TypeScript": {
+    "prepLink": "https://www.typescriptlang.org/docs/handbook/",
+    "prepLabel": "TypeScript Handbook",
+    "resources": [
+      { "title": "TypeScript Handbook", "url": "https://www.typescriptlang.org/docs/handbook/", "type": "free" },
+      { "title": "Total TypeScript", "url": "https://www.totaltypescript.com/", "type": "free" }
+    ]
+  },
+  "Docker": {
+    "prepLink": "https://docs.docker.com/get-started/",
+    "prepLabel": "Docker Getting Started",
+    "resources": [
+      { "title": "Docker Official Docs", "url": "https://docs.docker.com/get-started/", "type": "free" },
+      { "title": "Docker Crash Course YouTube", "url": "https://www.youtube.com/watch?v=pg19Z8LL06w", "type": "free" }
+    ]
+  },
+  "Kubernetes": {
+    "prepLink": "https://kubernetes.io/docs/tutorials/",
+    "prepLabel": "Kubernetes Tutorials",
+    "resources": [
+      { "title": "Kubernetes Official Tutorials", "url": "https://kubernetes.io/docs/tutorials/", "type": "free" },
+      { "title": "KodeKloud Free Labs", "url": "https://kodekloud.com/", "type": "free" }
+    ]
+  },
+  "Machine Learning": {
+    "prepLink": "https://www.coursera.org/learn/machine-learning",
+    "prepLabel": "Coursera ML by Andrew Ng",
+    "resources": [
+      { "title": "Andrew Ng ML Course", "url": "https://www.coursera.org/learn/machine-learning", "type": "free" },
+      { "title": "Fast.ai Practical DL", "url": "https://www.fast.ai/", "type": "free" }
+    ]
+  },
+  "Git": {
+    "prepLink": "https://learngitbranching.js.org/",
+    "prepLabel": "Learn Git Branching",
+    "resources": [
+      { "title": "Learn Git Branching", "url": "https://learngitbranching.js.org/", "type": "free" },
+      { "title": "Pro Git Book", "url": "https://git-scm.com/book/en/v2", "type": "free" }
+    ]
+  },
+  "C++": {
+    "prepLink": "https://www.learncpp.com/",
+    "prepLabel": "LearnCpp.com",
+    "resources": [
+      { "title": "LearnCpp.com", "url": "https://www.learncpp.com/", "type": "free" },
+      { "title": "CPPReference", "url": "https://en.cppreference.com/", "type": "free" }
+    ]
+  },
+  "HTML": {
+    "prepLink": "https://developer.mozilla.org/en-US/docs/Web/HTML",
+    "prepLabel": "MDN HTML Reference",
+    "resources": [
+      { "title": "MDN HTML", "url": "https://developer.mozilla.org/en-US/docs/Web/HTML", "type": "free" },
+      { "title": "FreeCodeCamp Responsive Web", "url": "https://www.freecodecamp.org/learn/2022/responsive-web-design/", "type": "free" }
+    ]
+  },
+  "CSS": {
+    "prepLink": "https://developer.mozilla.org/en-US/docs/Web/CSS",
+    "prepLabel": "MDN CSS Reference",
+    "resources": [
+      { "title": "MDN CSS", "url": "https://developer.mozilla.org/en-US/docs/Web/CSS", "type": "free" },
+      { "title": "CSS Tricks", "url": "https://css-tricks.com/", "type": "free" }
+    ]
+  },
+  "Communication": {
+    "prepLink": "https://www.coursera.org/learn/wharton-communication-skills",
+    "prepLabel": "Coursera Communication Skills",
+    "resources": [
+      { "title": "Coursera Communication Skills", "url": "https://www.coursera.org/learn/wharton-communication-skills", "type": "free" }
+    ]
+  },
+  "REST API": {
+    "prepLink": "https://restfulapi.net/",
+    "prepLabel": "RESTful API Guide",
+    "resources": [
+      { "title": "RESTful API Guide", "url": "https://restfulapi.net/", "type": "free" },
+      { "title": "MDN HTTP", "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP", "type": "free" }
+    ]
+  }
+}

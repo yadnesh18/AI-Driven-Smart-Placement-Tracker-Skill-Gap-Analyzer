@@ -12,7 +12,12 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true
+    required: false,
+    default: null,
+  },
+  googleId: {
+    type: String,
+    default: null,
   },
   role: {
     type: String,
@@ -25,12 +30,13 @@ const userSchema = new mongoose.Schema({
   resumePublicId: {
     type: String,
   },
-  resumeScore: {
-    type: Number,
-    default: 0,
-    min: 0,
-    max: 100,
+  resumeScore: { type: Number, default: 0 },
+  resumeScoreBreakdown: {
+    skillsCoverage: { type: Number, default: 0 },
+    missingSkillsPenalty: { type: Number, default: 0 },
+    resumeCompleteness: { type: Number, default: 0 },
   },
+  resumeScoreSummary: { type: String, default: "" },
   branch: {
     type: String,
     default: "",

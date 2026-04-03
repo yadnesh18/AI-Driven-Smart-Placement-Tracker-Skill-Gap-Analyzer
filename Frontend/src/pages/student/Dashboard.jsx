@@ -11,6 +11,8 @@ import {
   Award,
   Target,
   AlertCircle,
+  ExternalLink,
+  Bell,
 } from "lucide-react";
 
 const badgeClasses = (status) => {
@@ -31,21 +33,29 @@ const badgeClasses = (status) => {
 
 const StudentDashboard = () => {
   const [dashboard, setDashboard] = useState(null);
+  const [skillRadar, setSkillRadar] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const loadDashboard = async () => {
+    const loadData = async () => {
       try {
-        const res = await api.get("/student/dashboard");
-        setDashboard(res.data);
+        const [dashRes, radarRes] = await Promise.allSettled([
+          api.get("/student/dashboard"),
+          api.get("/student/analysis/skill-radar"),
+        ]);
+        if (dashRes.status === "fulfilled") setDashboard(dashRes.value.data);
+        if (radarRes.status === "fulfilled") setSkillRadar(radarRes.value.data);
+        if (dashRes.status === "rejected") {
+          setError(dashRes.reason?.response?.data?.message || "Failed to load dashboard");
+        }
       } catch (err) {
-        setError(err.response?.data?.message || err.message || "Failed to load dashboard");
+        setError(err.message || "Failed to load dashboard");
       } finally {
         setLoading(false);
       }
     };
-    loadDashboard();
+    loadData();
   }, []);
 
   if (loading) return <PageSkeleton />;
@@ -63,33 +73,23 @@ const StudentDashboard = () => {
   }
 
   const raw = dashboard || {};
-  let name = raw.name;
-  let resumeUploaded = raw.resumeUploaded;
-  let resumeScore = typeof raw.resumeScore === "number" ? raw.resumeScore : 0;
-  let skills = Array.isArray(raw.skills) ? raw.skills : [];
-  let keywords = Array.isArray(raw.keywords) ? raw.keywords : [];
-  let missingSkills = Array.isArray(raw.missingSkills) ? raw.missingSkills : [];
-  let roadmap = Array.isArray(raw.roadmap) ? raw.roadmap : [];
-  let appliedCompanies = Array.isArray(raw.appliedCompanies) ? raw.appliedCompanies : [];
-  let progress = raw.progress && typeof raw.progress === "object" ? raw.progress : { applied: 0, shortlisted: 0, interview: 0, selected: 0 };
-  let improvementSuggestions = Array.isArray(raw.improvementSuggestions) ? raw.improvementSuggestions : [];
+  const name = raw.name || "Student";
+  const resumeUploaded = raw.resumeUploaded;
+  const resumeScore = typeof raw.resumeScore === "number" ? raw.resumeScore : 0;
+  const skills = Array.isArray(raw.skills) ? raw.skills : [];
+  const appliedCompanies = Array.isArray(raw.appliedCompanies) ? raw.appliedCompanies : [];
+  const progress = raw.progress && typeof raw.progress === "object"
+    ? raw.progress
+    : { applied: 0, shortlisted: 0, interview: 0, selected: 0 };
+  const improvementSuggestions = Array.isArray(raw.improvementSuggestions) ? raw.improvementSuggestions : [];
 
-  const useMock = import.meta.env.DEV && !name && skills.length === 0 && appliedCompanies.length === 0;
-  if (useMock) {
-    name = name || "Student";
-    skills = ["JavaScript", "React", "Node.js"];
-    missingSkills = ["System Design", "Communication"];
-    keywords = ["JavaScript developer", "frontend", "REST APIs"];
-    roadmap = [
-      { title: "Resume Basics", description: "Create a professional resume to get started.", url: null },
-      { title: "Skills Assessment", description: "Identify skill gaps from your profile.", url: null },
-    ];
-    appliedCompanies = [
-      { name: "TechCorp", role: "SDE", status: "applied" },
-      { name: "StartupXYZ", role: "SDE", status: "shortlisted" },
-    ];
-    progress = { applied: 2, shortlisted: 1, interview: 0, selected: 0 };
-  }
+  // Skill radar data from analysis
+  const missingSkills = skillRadar?.missingSkills || raw.missingSkills || [];
+  const missingSkillsWithResources = skillRadar?.missingSkillsWithResources || [];
+  const latestCompany = skillRadar?.latestCompany;
+  const latestRole = skillRadar?.latestRole;
+  const overallScore = skillRadar?.overallScore;
+  const eligible = skillRadar?.eligible;
 
   const totalApps = (progress.applied || 0) + (progress.shortlisted || 0) + (progress.interview || 0) + (progress.selected || 0);
   const readinessPercent = Math.min(95, resumeUploaded ? 40 + resumeScore * 0.5 : resumeScore * 0.4);
@@ -99,7 +99,7 @@ const StudentDashboard = () => {
       {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-800">
-          Welcome, <span className="text-indigo-600">{name || "Student"}</span> 👋
+          Welcome, <span className="text-indigo-600">{name}</span> 👋
         </h1>
         <p className="text-slate-500 mt-1">Your placement journey at a glance</p>
       </div>
@@ -111,6 +111,26 @@ const StudentDashboard = () => {
         <StatCard title="Selected" value={progress.selected || 0} icon={Award} color="emerald" />
         <StatCard title="Resume Score" value={`${resumeScore}/100`} icon={Target} color="violet" />
       </div>
+
+      {/* Latest analysis result banner */}
+      {latestCompany && (
+        <div className={`rounded-2xl border p-5 ${eligible ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-600">Latest Analysis</p>
+              <p className="text-lg font-bold text-slate-800 mt-0.5">
+                {latestCompany} — {latestRole}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-slate-800">{overallScore}%</p>
+              <span className={`text-xs font-semibold px-3 py-1 rounded-full ${eligible ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                {eligible ? '✓ Eligible' : '✗ Not Eligible'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Progress bar */}
       <DashboardCard title="Placement Readiness" subtitle="Based on resume, skills, and applications">
@@ -142,7 +162,7 @@ const StudentDashboard = () => {
         <div className="xl:col-span-2 space-y-6">
           <ProgressTracker progress={progress} />
 
-          <DashboardCard title="Recommended Companies" subtitle="Based on your profile">
+          <DashboardCard title="Recent Applications" subtitle="Your latest company applications">
             {appliedCompanies.length === 0 ? (
               <p className="text-slate-500 text-sm py-4">Apply to companies from the Companies page to see them here.</p>
             ) : (
@@ -165,10 +185,29 @@ const StudentDashboard = () => {
         </div>
 
         <div className="space-y-6">
-          <DashboardCard title="Skill Gap Analysis" subtitle="Skills to improve">
-            {missingSkills.length === 0 ? (
-              <p className="text-slate-500 text-sm py-4">No skill gaps detected. Keep learning!</p>
-            ) : (
+          {/* Missing Skills with Preparation Links (Issue 5) */}
+          <DashboardCard title="Missing Skills" subtitle={latestCompany ? `For ${latestCompany} — ${latestRole}` : "Skills to improve"}>
+            {missingSkillsWithResources.length > 0 ? (
+              <div className="space-y-3">
+                {missingSkillsWithResources.map((item) => (
+                  <div
+                    key={item.skill}
+                    className="flex items-center justify-between rounded-xl border border-amber-100 bg-amber-50/50 px-4 py-3"
+                  >
+                    <span className="font-medium text-slate-800 text-sm">{item.skill}</span>
+                    <a
+                      href={item.prepLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      {item.prepLabel || "Learn"}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            ) : missingSkills.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {missingSkills.map((s) => (
                   <span key={s} className="px-3 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-700">
@@ -176,9 +215,12 @@ const StudentDashboard = () => {
                   </span>
                 ))}
               </div>
+            ) : (
+              <p className="text-slate-500 text-sm py-4">No skill gaps detected. Run an analysis against a company first!</p>
             )}
           </DashboardCard>
 
+          {/* AI Improvement Suggestions */}
           <DashboardCard title="AI Improvement Suggestions" subtitle="Personalised guidance from your resume">
             {improvementSuggestions.length === 0 ? (
               <p className="text-slate-500 text-sm py-4">
@@ -191,11 +233,7 @@ const StudentDashboard = () => {
                     key={`${item.skill || "skill"}-${idx}`}
                     className="rounded-xl border border-slate-100 bg-white/70 p-4 shadow-sm"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="font-semibold text-slate-800">
-                        {item.skill || "Skill"}
-                      </h3>
-                    </div>
+                    <h3 className="font-semibold text-slate-800">{item.skill || "Skill"}</h3>
                     {item.importance && (
                       <p className="mt-2 text-xs text-slate-500">
                         <span className="font-semibold text-slate-700">Why it matters:</span>{" "}
@@ -210,7 +248,7 @@ const StudentDashboard = () => {
                     )}
                     {item.resources && (
                       <a
-                        href={item.resources}
+                        href={typeof item.resources === "string" ? item.resources : "#"}
                         target="_blank"
                         rel="noreferrer"
                         className="mt-3 inline-flex text-xs font-semibold text-indigo-600 hover:text-indigo-700"
@@ -223,33 +261,12 @@ const StudentDashboard = () => {
               </div>
             )}
           </DashboardCard>
-
-          <DashboardCard title="Placement Roadmap" subtitle="Recommended steps">
-            {roadmap.length === 0 ? (
-              <p className="text-slate-500 text-sm py-4">Upload your resume for personalised suggestions.</p>
-            ) : (
-              <ul className="space-y-3">
-                {roadmap.slice(0, 3).map((item, idx) => (
-                  <li key={idx} className="flex gap-3">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center">
-                      {idx + 1}
-                    </span>
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">{item.title}</p>
-                      <p className="text-xs text-slate-500">{item.description}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </DashboardCard>
         </div>
       </div>
 
-      {/* Skills & keywords */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <SkillTags title="Extracted Skills" skills={skills} emptyMessage="No skills extracted yet." />
-        <SkillTags title="Resume Keywords" skills={keywords} emptyMessage="No keywords extracted yet." />
+      {/* Skills only — no keywords dump */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SkillTags title="Your Skills" skills={skills} emptyMessage="No skills extracted yet. Upload a resume." />
         <SkillTags title="Skill Gaps" skills={missingSkills} emptyMessage="No skill gaps detected." />
       </div>
     </div>
