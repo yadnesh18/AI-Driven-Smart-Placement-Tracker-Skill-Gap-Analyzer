@@ -1,36 +1,12 @@
 import React, { useEffect, useState } from "react";
 import api from "../../services/api";
-import { PageSkeleton } from "../../components/LoadingSkeleton";
-import EmptyState from "../../components/EmptyState";
-import {
-  Bell,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  Calendar,
-  Building2,
-  Mail,
-} from "lucide-react";
+
+const vignetteShadow = '0 20px 25px -5px rgba(53,37,205,0.04), 0 8px 10px -6px rgba(53,37,205,0.04)';
 
 const typeConfig = {
-  interview_invite: {
-    icon: Calendar,
-    color: "bg-blue-100 text-blue-600",
-    label: "Interview Invite",
-    badge: "bg-blue-50 text-blue-700 border-blue-200",
-  },
-  selected: {
-    icon: CheckCircle,
-    color: "bg-emerald-100 text-emerald-600",
-    label: "Selected",
-    badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  },
-  rejected: {
-    icon: XCircle,
-    color: "bg-red-100 text-red-600",
-    label: "Not Selected",
-    badge: "bg-red-50 text-red-700 border-red-200",
-  },
+  interview_invite: { icon: "calendar_today", bgIcon: "#d8e2ff", colorIcon: "#0058be", label: "Interview Invite", bg: "#d8e2ff", color: "#0058be" },
+  selected: { icon: "check_circle", bgIcon: "#e2dfff", colorIcon: "#3525cd", label: "Selected", bg: "#e2dfff", color: "#3525cd" },
+  rejected: { icon: "cancel", bgIcon: "#ffdad6", colorIcon: "#ba1a1a", label: "Not Selected", bg: "#ffdad6", color: "#ba1a1a" },
 };
 
 const StudentNotifications = () => {
@@ -41,14 +17,9 @@ const StudentNotifications = () => {
 
   useEffect(() => {
     const fetchNotifications = async () => {
-      try {
-        const res = await api.get("/student/notifications");
-        setData(res.data);
-      } catch (err) {
-        setError(err.response?.data?.message || err.message || "Failed to load notifications");
-      } finally {
-        setLoading(false);
-      }
+      try { const res = await api.get("/student/notifications"); setData(res.data); }
+      catch (err) { setError(err.response?.data?.message || err.message || "Failed to load notifications"); }
+      finally { setLoading(false); }
     };
     fetchNotifications();
   }, []);
@@ -59,108 +30,109 @@ const StudentNotifications = () => {
       await api.put(`/student/notifications/${notifId}/read`);
       setData((prev) => ({
         ...prev,
-        notifications: prev.notifications.map((n) =>
-          n.id === notifId ? { ...n, read: true } : n
-        ),
+        notifications: prev.notifications.map((n) => n.id === notifId ? { ...n, read: true } : n),
         unreadCount: Math.max(0, (prev.unreadCount || 1) - 1),
       }));
-    } catch (err) {
-      alert("Failed to mark as read");
-    } finally {
-      setMarkingRead(null);
-    }
+    } catch { alert("Failed to mark as read"); }
+    finally { setMarkingRead(null); }
   };
 
-  if (loading) return <PageSkeleton />;
+  if (loading) return (
+    <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
+      <div className="animate-spin" style={{ width: '2.5rem', height: '2.5rem', border: '3px solid #e2dfff', borderTopColor: '#3525cd', borderRadius: '9999px' }} />
+    </div>
+  );
 
-  if (error) {
-    return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-5 flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-        <div>
-          <h2 className="font-semibold text-red-700">Unable to load notifications</h2>
-          <p className="text-sm text-red-600 mt-1">{error}</p>
-        </div>
+  if (error) return (
+    <div className="flex items-start gap-3" style={{ borderRadius: '0.75rem', padding: '1.25rem', backgroundColor: '#ffdad6' }}>
+      <span className="material-symbols-outlined" style={{ color: '#ba1a1a' }}>error</span>
+      <div>
+        <h2 style={{ fontWeight: 600, color: '#93000a' }}>Unable to load notifications</h2>
+        <p style={{ fontSize: '0.875rem', color: '#ba1a1a' }}>{error}</p>
       </div>
-    );
-  }
+    </div>
+  );
 
   const notifications = data?.notifications || [];
   const unreadCount = data?.unreadCount || 0;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div style={{ padding: '2rem', fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Notifications</h1>
-          <p className="text-slate-500 mt-1">Interview invites, selections, and updates from admins.</p>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#191c1d' }}>Notifications</h1>
+          <p style={{ color: '#464555', marginTop: '0.375rem' }}>Interview invites, selections, and updates from admins.</p>
         </div>
         {unreadCount > 0 && (
-          <span className="text-sm font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+          <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#3525cd', backgroundColor: '#e2dfff', padding: '0.375rem 0.875rem', borderRadius: '9999px' }}>
             {unreadCount} unread
           </span>
         )}
       </div>
 
       {notifications.length === 0 ? (
-        <EmptyState
-          icon={Bell}
-          title="No notifications yet"
-          description="You'll see interview invites and selection updates here."
-        />
+        <div style={{ borderRadius: '0.75rem', backgroundColor: '#ffffff', boxShadow: vignetteShadow, padding: '3rem', textAlign: 'center' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '3rem', color: '#c7c4d8', display: 'block', marginBottom: '0.75rem' }}>notifications</span>
+          <p style={{ fontWeight: 600, color: '#464555' }}>No notifications yet</p>
+          <p style={{ fontSize: '0.875rem', color: '#777587', marginTop: '0.25rem' }}>You'll see interview invites and selection updates here.</p>
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {notifications.map((notif) => {
             const config = typeConfig[notif.type] || typeConfig.interview_invite;
-            const IconComp = config.icon;
-
             return (
               <div
                 key={notif.id}
-                className={`bg-white rounded-2xl shadow-md border overflow-hidden transition-all ${
-                  notif.read ? "border-slate-100/80 opacity-75" : "border-indigo-100 shadow-indigo-100/50"
-                }`}
+                style={{
+                  backgroundColor: '#ffffff',
+                  borderRadius: '0.75rem',
+                  boxShadow: notif.read ? 'none' : vignetteShadow,
+                  border: notif.read ? '1px solid #edeeef' : '1px solid rgba(53,37,205,0.08)',
+                  overflow: 'hidden',
+                  opacity: notif.read ? 0.7 : 1,
+                  transition: 'all 0.2s',
+                }}
               >
-                <div className="flex items-start gap-4 p-5">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${config.color}`}>
-                    <IconComp className="w-5 h-5" />
+                <div className="flex items-start gap-4" style={{ padding: '1.25rem' }}>
+                  <div className="flex items-center justify-center flex-shrink-0"
+                    style={{ width: '2.5rem', height: '2.5rem', borderRadius: '0.75rem', backgroundColor: config.bgIcon }}>
+                    <span className="material-symbols-outlined" style={{ color: config.colorIcon, fontVariationSettings: "'FILL' 1" }}>{config.icon}</span>
                   </div>
 
-                  <div className="flex-1 min-w-0">
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${config.badge}`}>
+                      <span style={{ fontSize: '0.6875rem', fontWeight: 700, padding: '0.25rem 0.625rem', borderRadius: '0.375rem', backgroundColor: config.bg, color: config.color }}>
                         {config.label}
                       </span>
                       {!notif.read && (
-                        <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                        <span style={{ width: '0.5rem', height: '0.5rem', borderRadius: '9999px', backgroundColor: '#3525cd' }} />
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 mt-2">
-                      <Building2 className="w-4 h-4 text-slate-400" />
-                      <span className="font-semibold text-slate-800">{notif.company}</span>
-                      <span className="text-sm text-slate-500">— {notif.role}</span>
+                    <div className="flex items-center gap-2" style={{ marginTop: '0.5rem' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '1rem', color: '#777587' }}>business</span>
+                      <span style={{ fontWeight: 600, color: '#191c1d', fontSize: '0.9375rem' }}>{notif.company}</span>
+                      <span style={{ fontSize: '0.8125rem', color: '#464555' }}>— {notif.role}</span>
                     </div>
 
-                    <p className="text-sm text-slate-600 mt-2 leading-relaxed">{notif.message}</p>
+                    <p style={{ fontSize: '0.8125rem', color: '#464555', marginTop: '0.5rem', lineHeight: 1.6 }}>{notif.message}</p>
 
                     {notif.interviewDate && (
-                      <div className="flex items-center gap-2 mt-2 text-sm text-blue-600 font-medium">
-                        <Calendar className="w-4 h-4" />
+                      <div className="flex items-center gap-2" style={{ marginTop: '0.5rem', fontSize: '0.8125rem', fontWeight: 600, color: '#0058be' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>event</span>
                         Interview: {new Date(notif.interviewDate).toLocaleString()}
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between mt-3">
-                      <span className="text-xs text-slate-400">
+                    <div className="flex items-center justify-between" style={{ marginTop: '0.75rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#777587' }}>
                         {new Date(notif.createdAt).toLocaleString()}
                       </span>
                       {!notif.read && (
-                        <button
-                          onClick={() => handleMarkRead(notif.id)}
-                          disabled={markingRead === notif.id}
-                          className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 px-3 py-1 rounded-lg hover:bg-indigo-50 disabled:opacity-50 transition-colors"
-                        >
+                        <button onClick={() => handleMarkRead(notif.id)} disabled={markingRead === notif.id}
+                          style={{ fontSize: '0.75rem', fontWeight: 600, color: '#3525cd', padding: '0.25rem 0.75rem', borderRadius: '0.5rem', background: 'none', border: 'none', cursor: 'pointer', opacity: markingRead === notif.id ? 0.5 : 1, transition: 'all 0.2s' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e2dfff'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                           {markingRead === notif.id ? "…" : "Mark as read"}
                         </button>
                       )}

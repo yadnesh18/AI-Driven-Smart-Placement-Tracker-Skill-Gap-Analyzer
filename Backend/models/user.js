@@ -12,12 +12,7 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: false,
-    default: null,
-  },
-  googleId: {
-    type: String,
-    default: null,
+    required: true
   },
   role: {
     type: String,

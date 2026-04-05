@@ -1,9 +1,6 @@
 import User from "../models/user.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { OAuth2Client } from "google-auth-library";
-
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const createToken = (user) => {
   return jwt.sign(
@@ -68,13 +65,6 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // Google-only users can't login with password
-    if (!user.password) {
-      return res.status(400).json({
-        message: "This account uses Google Sign-In. Please use the Google button to log in.",
-      });
-    }
-
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
@@ -95,61 +85,3 @@ export const loginUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-// GOOGLE LOGIN
-export const googleLogin = async (req, res) => {
-  try {
-    const { credential } = req.body;
-
-    if (!credential) {
-      return res.status(400).json({ message: "Google credential is required" });
-    }
-
-    // Verify the ID token
-    const ticket = await googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-
-    const payload = ticket.getPayload();
-    const { sub: googleId, email, name, picture } = payload;
-
-    if (!email) {
-      return res.status(400).json({ message: "Email not available from Google account" });
-    }
-
-    // Find existing user or create a new one
-    let user = await User.findOne({ $or: [{ googleId }, { email }] });
-
-    if (user) {
-      // Link Google ID if existing user logged in via email before
-      if (!user.googleId) {
-        user.googleId = googleId;
-        await user.save();
-      }
-    } else {
-      // Create a new student user
-      user = await User.create({
-        name: name || email.split("@")[0],
-        email,
-        googleId,
-        role: "student",
-      });
-    }
-
-    const token = createToken(user);
-
-    res.status(200).json({
-      message: "Login successful",
-      token,
-      role: user.role,
-      user: sanitizeUser(user),
-    });
-  } catch (error) {
-    console.error("Google login error:", error.message);
-    res.status(401).json({
-      message: "Google authentication failed. Please try again.",
-    });
-  }
-};
-

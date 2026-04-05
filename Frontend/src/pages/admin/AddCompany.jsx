@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import api from "../../services/api";
-import { PlusCircle, AlertCircle, CheckCircle } from "lucide-react";
+
+const vignetteShadow = '0 20px 25px -5px rgba(53,37,205,0.04), 0 8px 10px -6px rgba(53,37,205,0.04)';
+
+const inputStyle = {
+  width: '100%', padding: '0.875rem 1rem', backgroundColor: '#edeeef', border: '2px solid transparent',
+  borderRadius: '0.75rem', color: '#191c1d', fontSize: '0.875rem', fontWeight: 500, outline: 'none',
+  transition: 'all 0.2s',
+};
 
 const AdminAddCompany = () => {
   const [name, setName] = useState("");
@@ -15,162 +22,96 @@ const AdminAddCompany = () => {
   const [success, setSuccess] = useState(null);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-
+    e.preventDefault(); setError(null); setSuccess(null);
     const parsedPackage = Number(pkg);
     if (!name || !role || Number.isNaN(parsedPackage)) {
-      setError("Name, role and numeric package are required.");
-      return;
+      setError("Name, role and numeric package are required."); return;
     }
-
-    const requiredSkills = skills
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
+    const requiredSkills = skills.split(",").map((s) => s.trim()).filter(Boolean);
     setLoading(true);
     try {
-      await api.post("/admin/company", {
-        name,
-        role,
-        package: parsedPackage,
-        requiredSkills,
-        description,
-        location,
-        deadline: deadline || undefined,
-      });
+      await api.post("/admin/company", { name, role, package: parsedPackage, requiredSkills, description, location, deadline: deadline || undefined });
       setSuccess("Company added successfully.");
-      setName("");
-      setRole("");
-      setPkg("");
-      setSkills("");
-      setDescription("");
-      setLocation("");
-      setDeadline("");
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || "Failed to add company");
-    } finally {
-      setLoading(false);
-    }
+      setName(""); setRole(""); setPkg(""); setSkills(""); setDescription(""); setLocation(""); setDeadline("");
+    } catch (err) { setError(err.response?.data?.message || err.message || "Failed to add company"); }
+    finally { setLoading(false); }
   };
 
+  const fields = [
+    { label: "Company Name", value: name, set: setName, type: "text", placeholder: "Google", icon: "business" },
+    { label: "Role", value: role, set: setRole, type: "text", placeholder: "Software Engineer", icon: "work" },
+    { label: "Package (LPA)", value: pkg, set: setPkg, type: "number", placeholder: "24", icon: "payments" },
+    { label: "Location", value: location, set: setLocation, type: "text", placeholder: "Bangalore, India", icon: "location_on" },
+    { label: "Deadline", value: deadline, set: setDeadline, type: "date", placeholder: "", icon: "calendar_today" },
+  ];
+
   return (
-    <div className="max-w-2xl space-y-6">
+    <div style={{ maxWidth: '40rem', padding: '2rem', fontFamily: "'Inter', sans-serif", display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">Add Company</h1>
-        <p className="text-slate-500 mt-1">
-          Create a new company opening for students to apply.
-        </p>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#191c1d' }}>Add Company</h1>
+        <p style={{ color: '#464555', marginTop: '0.375rem' }}>Create a new company opening for students to apply.</p>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-2xl shadow-md border border-slate-100/80 p-6 space-y-5"
-      >
+      <form onSubmit={handleSubmit} style={{ backgroundColor: '#ffffff', borderRadius: '0.75rem', boxShadow: vignetteShadow, padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Company Name</label>
-            <input
-              type="text"
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Google"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Role</label>
-            <input
-              type="text"
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              placeholder="Software Engineer"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Package (LPA)</label>
-            <input
-              type="number"
-              min="0"
-              step="0.1"
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-              value={pkg}
-              onChange={(e) => setPkg(e.target.value)}
-              placeholder="24"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Location</label>
-            <input
-              type="text"
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Bangalore, India"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Application Deadline</label>
-            <input
-              type="date"
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-            />
-          </div>
+          {fields.map(({ label, value, set, type, placeholder, icon }) => (
+            <div key={label}>
+              <label style={{ display: 'block', fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#777587', marginBottom: '0.375rem' }}>{label}</label>
+              <div className="relative">
+                <input
+                  type={type} value={value} onChange={(e) => set(e.target.value)} placeholder={placeholder}
+                  style={inputStyle}
+                  onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(53,37,205,0.1)'; e.target.style.backgroundColor = '#ffffff'; }}
+                  onBlur={(e) => { e.target.style.boxShadow = 'none'; e.target.style.backgroundColor = '#edeeef'; }}
+                />
+                <div className="absolute flex items-center" style={{ right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#c7c4d8' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '1.125rem' }}>{icon}</span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Required Skills (comma separated)
-          </label>
-          <input
-            type="text"
-            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow"
-            value={skills}
-            onChange={(e) => setSkills(e.target.value)}
-            placeholder="DSA, JavaScript, React"
-          />
+          <label style={{ display: 'block', fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#777587', marginBottom: '0.375rem' }}>Required Skills (comma separated)</label>
+          <input type="text" value={skills} onChange={(e) => setSkills(e.target.value)} placeholder="DSA, JavaScript, React"
+            style={inputStyle}
+            onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(53,37,205,0.1)'; e.target.style.backgroundColor = '#ffffff'; }}
+            onBlur={(e) => { e.target.style.boxShadow = 'none'; e.target.style.backgroundColor = '#edeeef'; }} />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">Description</label>
-          <textarea
-            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-shadow resize-none"
-            rows={3}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+          <label style={{ display: 'block', fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#777587', marginBottom: '0.375rem' }}>Description</label>
+          <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
             placeholder="Short description of the role and expectations."
-          />
+            style={{ ...inputStyle, resize: 'none' }}
+            onFocus={(e) => { e.target.style.boxShadow = '0 0 0 3px rgba(53,37,205,0.1)'; e.target.style.backgroundColor = '#ffffff'; }}
+            onBlur={(e) => { e.target.style.boxShadow = 'none'; e.target.style.backgroundColor = '#edeeef'; }} />
         </div>
 
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 flex items-center gap-3">
-            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-            <p className="text-sm font-medium text-red-700">{error}</p>
+          <div className="flex items-center gap-3" style={{ borderRadius: '0.75rem', padding: '0.875rem 1rem', backgroundColor: '#ffdad6' }}>
+            <span className="material-symbols-outlined" style={{ color: '#ba1a1a' }}>error</span>
+            <p style={{ fontSize: '0.875rem', fontWeight: 500, color: '#93000a' }}>{error}</p>
           </div>
         )}
         {success && (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 flex items-center gap-3">
-            <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-            <p className="text-sm font-medium text-emerald-800">{success}</p>
+          <div className="flex items-center gap-3" style={{ borderRadius: '0.75rem', padding: '0.875rem 1rem', backgroundColor: '#e2dfff' }}>
+            <span className="material-symbols-outlined" style={{ color: '#3525cd' }}>check_circle</span>
+            <p style={{ fontSize: '0.875rem', fontWeight: 500, color: '#3525cd' }}>{success}</p>
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40"
-        >
-          <PlusCircle className="w-5 h-5" />
-          {loading ? "Saving..." : "Add Company"}
+        <button type="submit" disabled={loading} className="flex items-center gap-2"
+          style={{
+            padding: '0.75rem 1.5rem', borderRadius: '0.75rem',
+            background: 'linear-gradient(135deg, #3525cd 0%, #4f46e5 100%)',
+            color: '#ffffff', fontWeight: 600, fontSize: '0.875rem', border: 'none',
+            cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.5 : 1,
+            boxShadow: '0 4px 14px -3px rgba(53,37,205,0.3)', transition: 'all 0.2s',
+          }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>add_business</span>
+          {loading ? "Saving…" : "Add Company"}
         </button>
       </form>
     </div>

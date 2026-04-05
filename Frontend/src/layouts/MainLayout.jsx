@@ -9,13 +9,16 @@ const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
+    <div
+      className="min-h-screen flex"
+      style={{ backgroundColor: "#edeeef", fontFamily: "'Inter', sans-serif" }}
+    >
       <Sidebar role={role} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0">
         <Navbar onMenuClick={() => setSidebarOpen(true)} role={role} onLogout={logout} />
 
-        <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-auto">
           <Outlet />
         </main>
       </div>
