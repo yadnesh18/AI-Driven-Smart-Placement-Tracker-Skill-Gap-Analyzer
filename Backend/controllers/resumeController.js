@@ -1,6 +1,6 @@
 import User from "../models/user.js";
 import Company from "../models/Company.js";
-import cloudinary from "../config/cloudinary.js";
+import { uploadToS3 } from "../config/s3.js";
 import pdfParse from "pdf-parse";
 import fs from "fs";
 
@@ -76,13 +76,10 @@ export const uploadResume = async (req, res) => {
 
     const localPath = req.file.path;
 
-    // Upload to Cloudinary
-    const uploadResult = await cloudinary.uploader.upload(localPath, {
-      resource_type: "auto",
-      folder: "resumes",
-    });
-
-    const resumeUrl = uploadResult.secure_url;
+    // Upload to S3
+    const fileName = req.file.filename;
+    const mimeType = req.file.mimetype;
+    const resumeUrl = await uploadToS3(localPath, fileName, mimeType);
 
     // Extract text from PDF
     const fileBuffer = await fs.promises.readFile(localPath);
